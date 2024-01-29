@@ -8,22 +8,12 @@ useDebug = 0; % debug mode?
 %color_idx = 3; % 1, 2 or 3: which periphery color we are using. now input when calling function
 center_azimuth = 270;
 all_periphery_azimuths = [280; 290; 300];
-dkl_radius = 0.07; % 0.07 for eyelink; possibly different for propixx?
+dkl_radius = 0.07;
 bg_lum = 0.3; % background grey luminance to match, between 0 - 1
-    % set this to 0.3 for eyelink experiment, probably 0.1 for propixx
-
-
 
 subj_id = input('Subject number: ', 's');
 color_idx = str2num(input('Which color? 1 2 or 3', 's'));
-if ismac % max's macbook pro
-    scripts_dir='~/Documents/McGill/neurospeed/Uniformity_Illusion/';
-elseif isunix % rosaline BIC workstation
-    scripts_dir='/export03/data/mlevin/Uniformity_Illusion/';
-else % eyelink room or home pc
-    scripts_dir='C:\Users\tneuro3\Documents\MATLAB\Max\Uniformity_Illusion\';
-    %params.scripts_dir='C:\Users\max\Documents\neurospeed\Uniformity_Illusion\';
-end
+scripts_dir='C:\Users\tneuro3\Documents\MATLAB\Max\Uniformity_Illusion\';
 addpath(genpath(scripts_dir));
 data_dir=[scripts_dir, 'bhv_data/'];
 mkdir(data_dir);
@@ -36,10 +26,10 @@ end
 
 % load example monitor phosphors and cone fundamentals from toolbox
 % note on this circle: 0 deg = "red", 90 = "yellow", 180 = "green", 270 = "blue"
+% below notes are irrelevant to our purposes but, anyway:
     % 0, 180 = maximum L-M contrast, no S-(L+M) contrast
         % aka S cone activation is equal to the "sum" of L+M
-        % red (0): greatest L-M difference. But S = 0 so why is there no S-(L+M) contrast?
-            % maybe because there is no M either?
+        % red (0): greatest L-M difference.
         % green (180): L+M = S
     % 90, 270 = maximum S-(L+M) contrast, no L-M contrast
         % blue (270): S peak, no L or M activation (so L-M = 0)   pos max
@@ -56,7 +46,7 @@ color1_rgb = lms2rgb(phosphors, fundamentals, dkl2lms(bg_lms, dkl_sph2cart([dkl_
 color2_rgb = lms2rgb(phosphors, fundamentals, dkl2lms(bg_lms, dkl_sph2cart([dkl_radius, color2_azimuth, 0]))) .* 255;
 
 % do minimum motion flicker
-% just: take the single target RGB color, and increment or decrement all 3
+% just take the single target RGB color, and increment or decrement all 3
     % RGB channels by 1 to move a luminance step.
 color1_rgb = round(color1_rgb);
 color2_rgb = round(color2_rgb);
