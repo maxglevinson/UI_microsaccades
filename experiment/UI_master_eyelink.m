@@ -95,7 +95,7 @@ end
 
 % set stimulus parameters
 switch params.stimtype
-      case 'color'
+    case 'color'
         load('phosphors.mat'); % monitor RGB phosphors (template, not calibrated)
         params.phosphors = phosphors;
         load('fundamentals_ss.mat'); % cone fundamentals, Stockman & Sharpe
@@ -235,12 +235,12 @@ for block=1:params.nBlocks
     data(blocktrials,5)=[1:params.nTrials_per_block]';
     
     % STIMULUS CHARACTERISTICS
-            data(blocktrials, 12) = params.colorCenter;
-            data(blocktrials, 13) = params.colorPeriphery(params.blockOrder(block));
+    data(blocktrials, 12) = params.colorCenter;
+    data(blocktrials, 13) = params.colorPeriphery(params.blockOrder(block));
     
-        % get random start of physical shift, between range given in params.shiftstart_range
-        shiftstart_range_frames = (floor(params.shiftstart_range(1) ./ params.IFI):floor(params.shiftstart_range(2) ./ params.IFI));
-        timing(blocktrials(controlshiftblocktrials), 4) = datasample(shiftstart_range_frames, sum(controlshiftblocktrials));
+    % get random start of physical shift, between range given in params.shiftstart_range
+    shiftstart_range_frames = (floor(params.shiftstart_range(1) ./ params.IFI):floor(params.shiftstart_range(2) ./ params.IFI));
+    timing(blocktrials(controlshiftblocktrials), 4) = datasample(shiftstart_range_frames, sum(controlshiftblocktrials));
     
     % set center size for this block
     data(blocktrials, 11) = params.blockSizeOrder(block);
@@ -312,7 +312,7 @@ for block = 1:params.nBlocks
     % because changing center size every block, re-init stimulus
     params.centerdva = params.blockSizeOrder(block);
     params = UI_generate_center_rects(params);
-            [stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_color_init(params);
+    [stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_color_init(params);
     
     if params.eyeLink && block > 1 % don't re-calibrate for first block
         disp('ready to calibrate'); % let experimenter know they are ready
