@@ -397,7 +397,7 @@ for block = 1:params.nBlocks
                 params.eye_used = Eyelink('EyeAvailable');
             end
             
-            [data(trial_idx, :), timing(trial_idx, :), exitNow, fliptimes, bad_fix] = UI_runTrial(winMain, params, data(trial_idx, :), timing(trial_idx, :), stimulus, exitNow);
+            [data(trial_idx, :), timing(trial_idx, :), exitNow, bad_fix] = UI_runTrial(winMain, params, data(trial_idx, :), timing(trial_idx, :), stimulus, exitNow);
             
             if params.eyeLink
                 Eyelink('Message', 'TRIAL_RESULT 0'); % if using dataviewer thing
