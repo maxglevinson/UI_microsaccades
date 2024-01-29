@@ -7,16 +7,22 @@ nblocks = 3; % blocks per session
 ntrialsperblock = 50;
 subj_id = num2str(subj_id);
 session_id = num2str(session_id);
+trials_file = ['bhv_data/trials_sub' subj_id 's' session_id '.mat'];
+
+% if processing first from raw
 %edffile = ['bhv_data/sub' subj_id 's' session_id '.edf'];
 %Trials = edfImport(edffile, [1 1 1]); % last 1 parameter is to include all samples
-trials_file = ['bhv_data/trials_sub' subj_id 's' session_id '.mat'];
 %save(trials_file, 'Trials'); % save Trials struct for future use
-% note for subject 210, I combined sessions 3-4 and changed the block
+
+% note for subject 210, I manually combined sessions 3-4 and changed the block
 % numbers of session 4 from [1,2] to [2,3]. Original edfs are unchanged;
 % just the new trials_file is changed. Same general thing done for subj 223.
-% subj 201 also has a 4th session, in which I pressed the button at random
-% times (i.e. a control)
+% subj 201 also has a 4th session which we should ignore, in which I pressed the button at random
+% times (i.e. control data for comparison)
+
+% if already processed before from ra,k load processed version
 load(trials_file); % load Trials struct instead of full edf
+
 fps = Trials(1).Header.rec.sample_rate;
 
 % get indices of good trials (not aborted due to bad fixation or blink)
@@ -34,11 +40,10 @@ trial_counter(good_trials) = repmat(1:ntrialsperblock, 1, nblocks_actual);
 
 % also select only main illusion trials, not control / catch trials
 bhv_data = load(['bhv_data/color_' subj_id '_allsessions_data.mat']);
-%bhv_data = load(['bhv_data/color_' subj_id '_session_4_data.mat']); block_idx=1:50;
 block_idx = (str2num(session_id)-1) * 3 + (1:3);
+%bhv_data = load(['bhv_data/color_' subj_id '_session_4_data.mat']); block_idx=1:50; % to look at subj 201 block4 control
 session_trials = find(ismember(bhv_data.data(:, 3), block_idx));
 illusion_trials = bhv_data.data(session_trials, 2) == 1; %1 = illusion, 2 = replay, 3 = catch
-%illusion_trials = bhv_data.data(session_trials, 2) == 2; %1 = illusion, 2 = replay, 3 = catch
 % also exclude trials with median fixation displacement > 1 dva
 illusion_trials = illusion_trials & bhv_data.data(session_trials, 8) < 1;
 illusion_trials = illusion_trials(1:numel(good_trials)); % in case there are more data entries than actual recorded trials (if experiment ended earlier than planned)
@@ -60,33 +65,33 @@ for iTrial = 1:numel(Trials)
         if isfield(Trials(iTrial).KeyEvents, 'BUTTON_PRESS')
             % BUT ONLY TAKE TRIALS WITH RT > 2.
             rt = Trials(iTrial).KeyEvents.BUTTON_PRESS - Trials(iTrial).KeyEvents.STIM_ONSET;
-            if rt > 2000 % or try RT > 5, to avoid confounding fix offset with desired trial events.
+            if rt > 2000
                 button_trials(iTrial) = 1;
             end
         end
-        % for control trials, do we want to only take trials where shift
-        % started?
+        % if analyzing control trials instead, do we want to only take trials where shift
+        % started? e.g., they didn't press the button too early
         %if ~isfield(Trials(iTrial).KeyEvents, 'SHIFT_ONSET')
         %    button_trials(iTrial) = 0;
         %end
     end
 end
 
-% get rid of trials in which blink or large saccade occurs within 2 seconds before button
-% press (within 1.5 seconds before subjective filling-in, presumably)
+% get rid of trials in which blink or large saccade occurs within some cutoff time before button
+% press (e.g. 2 seconds: within 1.5 seconds before subjective filling-in, presumably)
 exclude_blinks = 1; % default yes, but set to 0 if we want to analyze even trials with blinks in this time window.
 
 subj_extra.excludedsaccadetrials = 0;
 subj_extra.excludedblinktrials = 0;
 if exclude_blinks
-%blink_cutoff = -2000;
-blink_cutoff = -300; % just during motor reaction time. (current_data_withblinks.mat)
+%blink_cutoff = -2000; % for cleaner ms rate curve visual - avoid blinks within 2 seconds before button press
+blink_cutoff = -300; % just during motor reaction time. Better for linear modeling.
 for iTrial = 1:numel(Trials)
     if button_trials(iTrial)
         button_idx = Trials(iTrial).KeyEvents.BUTTON_PRESS - Trials(iTrial).KeyEvents.STIM_ONSET; % indexing starts at stim onset
         blink_indices = get_event_indices(Trials(iTrial), 150, 150, 'blink');
         saccade_indices = get_event_indices(Trials(iTrial), 150, 150, 'saccade');
-        exclude_indices = button_idx + (blink_cutoff:0); % or if also +1000 now, do -2000:1000;
+        exclude_indices = button_idx + (blink_cutoff:0); % cuts off at button (t=0), can extend later too
         if sum(ismember(exclude_indices, blink_indices))
             button_trials(iTrial) = 0; % remove trial from analysis.
             subj_extra.excludedblinktrials = subj_extra.excludedblinktrials+1;
@@ -117,11 +122,7 @@ end
 
 
 % prepare for microsaccade algorithm
-%script_version = 'engbert'; % something is wrong in my engbert ms detection code - main sequence doesn't look right. But it does for edfExtractMicrosaccades.
-%script_version = 'martinez_conde'; % seems to match edfExtractMicrosaccades well so we can keep this probably
-script_version = 'edfImport';
 
-if strcmp(script_version, 'edfImport')
 % extract microsaccades
 Trials(1).Microsaccades = [];
 if sum(strcmp(subj_id, {'219', '223', '224'}))
@@ -130,7 +131,6 @@ else
     eta = 5; % default
 end
 Trials(logical(button_trials)) = UI_extractMicrosaccades(Trials(logical(button_trials)), eta);
-end
 
 % initialize data structures
 ms_present = cell(1, nblocks);
@@ -144,7 +144,6 @@ for bl = 1:nblocks
     trial_indices{bl} = nan(numel(block_button_trials{bl}), 4);
     posdata{bl} = cell(1, numel(block_button_trials{bl}));
 end
-
 
 for bl = 1:nblocks
     button_trials_use = block_button_trials{bl};
@@ -225,9 +224,9 @@ for bl = 1:nblocks
         curr_pupil_highfilt = highpass(curr_pupil(nonnanidx), 0.01, fps);% 0.01 Hz to remove low drift & zero mean
         curr_pupil_filt = lowpass(curr_pupil_highfilt, 6, fps); % 6 hz a la Brascamp et al 2021
         curr_pupil(nonnanidx) = [nan(1, 30), curr_pupil_filt(31:end-30), nan(1, 30)]; % replace transients with nans
-        % resample
+        % resample?
         %curr_pupil_resample = resample(curr_pupil_filt, 10, fps); % 10 Hz a la Brascamp et al 2021
-        % z score, ignoring nans, relative to t=2000 onwards to avoid stim onset transient.
+        % z score?, ignoring nans, relative to t=2000 onwards to avoid stim onset transient.
         %curr_pupil = (curr_pupil - nanmean(curr_pupil(3000:end))) ./ nanstd(curr_pupil(3000:end));
         % or by median (robust z score)
         %curr_pupil = (curr_pupil - nanmedian(curr_pupil)) ./ nanmedian(abs(curr_pupil - nanmedian(curr_pupil)));
@@ -238,38 +237,7 @@ for bl = 1:nblocks
         % assign each timepoint with whether or not microsaccade is ongoing
         ms_present{bl}{iTrial} = zeros(1, size(trial_data, 2));
         % run actual algorithm
-        switch script_version
-            case 'engbert'
-                % this method: Engbert & Kliegl, 2003
-                [EyeSaccades, BinocularSaccades, xyVelocity] = microsaccades_engbert_kliegel(trial_data);
-                % msIndices: all of the timepoints that are included in all the microsaccades.
-                % msStarts/msEnds: indices of msIndices that are starts and endpoints.
-                for ms = 1:numel(BinocularSaccades.msStarts) % now set microsaccade timepoints to 1
-                    all_ms_indices = BinocularSaccades.msStarts(ms):BinocularSaccades.msEnds(ms);
-                    if ~isempty(all_ms_indices)
-                        ms_present{bl}{iTrial}(all_ms_indices) = 1;
-                    end
-                end
-                all_BinocularSaccades{bl}{iTrial} = BinocularSaccades;
-                all_xyVelocity{bl}{iTrial} = xyVelocity;
-            case 'martinez_conde'
-                % this method: Martinez_Conde et al., 2006
-                %scratch_investigate_single_trial(trial_data);
-                [microsaccade_details, bi_microsaccade_details, xyVelocity] = microsaccades_martinez_conde_2006(trial_data);
-                for ms = 1:numel(bi_microsaccade_details.start)
-                    msStart = bi_microsaccade_details.start(ms);
-                    msEnd = msStart + bi_microsaccade_details.duration(ms) - 1;
-                    all_ms_indices = msStart:msEnd;
-                    if ~isempty(all_ms_indices)
-                        ms_present{bl}{iTrial}(all_ms_indices) = 1;
-                    end
-                end
-                all_BinocularSaccades{bl}{iTrial} = bi_microsaccade_details;
-                all_xyVelocity{bl}{iTrial} = xyVelocity;
-                case 'edfImport'
-                % this method: calling:
-                % Trials = edfExtractMicrosaccades(Trials, 30, 5, 8, 12);
-                [~, ~, all_xyVelocity{bl}{iTrial}] = microsaccades_martinez_conde_2006(trial_data);
+                [~, all_xyVelocity{bl}{iTrial}] = UI_extractMicrosaccades(Trials(trial_idx));
                 if ~isempty(Trials(trial_idx).Microsaccades)
                 for ms = 1:numel(Trials(trial_idx).Microsaccades.Start)
                     msStart = Trials(trial_idx).Microsaccades.Start(ms);
@@ -282,7 +250,6 @@ for bl = 1:nblocks
                 end
                 end
                 all_BinocularSaccades{bl}{iTrial} = Trials(trial_idx).Microsaccades;
-        end
         % get event indices, where trial start (fixation onset) = 1
         start_idx_trial = trial_start_idx - trial_start_idx + 1;
         stim_on_idx_trial = stim_start_idx - trial_start_idx + 1;
