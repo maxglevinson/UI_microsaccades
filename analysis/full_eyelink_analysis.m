@@ -1,4 +1,3 @@
-
 %% group analysis for eyelink data
 addpath(genpath(pwd));
 subjects = [201, 202, 203, 204, 205, 206, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 222, 223, 224];
@@ -68,31 +67,6 @@ for subj = 1:nsubjects
             ms_amplitudes_all_unsorted{subj}{block}{trial} = nan(size(ms_present_all_unsorted{subj}{block}{trial}));
             ms_directions_all_unsorted{subj}{block}{trial} = nan(size(ms_present_all_unsorted{subj}{block}{trial}));
             ms_present_indices = find(ms_present_all_unsorted{subj}{block}{trial});
-            % martinez-conde
-            if isfield(BinocularSaccades_all_unsorted{subj}{block}{trial}, 'start')
-                ntrialms = numel(BinocularSaccades_all_unsorted{subj}{block}{trial}.start);
-                for ms = ms_present_indices
-                    for nms = 1:ntrialms
-                        curr_ms_indices = BinocularSaccades_all_unsorted{subj}{block}{trial}.start(nms):(BinocularSaccades_all_unsorted{subj}{block}{trial}.start(nms)+BinocularSaccades_all_unsorted{subj}{block}{trial}.duration(nms));
-                        if ismember(ms, curr_ms_indices) % if current timepoint is within this microsaccade
-                            ms_amplitudes_all_unsorted{subj}{block}{trial}(ms) = BinocularSaccades_all_unsorted{subj}{block}{trial}.XYAmplitude(nms); % assign tp with microsaccade's amplitude
-                            ms_durations_all_unsorted{subj}{block}{trial}(ms) = BinocularSaccades_all_unsorted{subj}{block}{trial}.duration(nms); % assign tp with microsaccade's duration
-                        end
-                    end
-                end
-                % engbert
-            elseif isfield(BinocularSaccades_all_unsorted{subj}{block}{trial}, 'msStarts')
-                ntrialms = numel(BinocularSaccades_all_unsorted{subj}{block}{trial}.msStarts);
-                for ms = ms_present_indices
-                    for nms = 1:ntrialms
-                        curr_ms_indices = BinocularSaccades_all_unsorted{subj}{block}{trial}.msStarts(nms):BinocularSaccades_all_unsorted{subj}{block}{trial}.msEnds(nms);
-                        if ismember(ms, curr_ms_indices) % if current timepoint is within this microsaccade
-                            ms_amplitudes_all_unsorted{subj}{block}{trial}(ms) = BinocularSaccades_all_unsorted{subj}{block}{trial}.msXYAmplitude(nms); % assign tp with microsaccade's amplitude
-                        end
-                    end
-                end
-                % edfImport edfExtractMicrosaccades
-            elseif isfield(BinocularSaccades_all_unsorted{subj}{block}{trial}, 'Start')
                 ntrialms = numel(BinocularSaccades_all_unsorted{subj}{block}{trial}.Start);
                 for ms = ms_present_indices
                     for nms = 1:ntrialms
@@ -104,7 +78,6 @@ for subj = 1:nsubjects
                         end
                     end
                 end
-            end
         end
     end
     
@@ -133,28 +106,6 @@ distcm = 60;
 pxbycm_x = 2560 / horzcm;
 pixperdeg = pi * 2560 / atan(horzcm/distcm/2) / 360; % pixels per degree of visual angle
 degperpix = 1 / pixperdeg;
-% for subj = 1:nsubjects
-%     for block = 1:nblocks
-%         ntr = size(posdata_all{subj}{block}, 2);
-%         for tr = 1:ntr
-%             posdata_all{subj}{block}{tr}(2:5, :) = posdata_all{subj}{block}{tr}(2:5, :) * degperpix;
-%         end
-%     end
-% end
-%
-
-% % make saccades = 0 and make blinks (missing data, nan) = 1? (current_data_blinks.mat)
-% for subj = 1:nsubjects
-%     for block = 1:nblocks
-%         nblocktrials = size(ms_present_all{subj}{block}, 2);
-%         for trial = 1:nblocktrials
-%             ms_present_one = find(ms_present_all{subj}{block}{trial} == 1);
-%             ms_present_nan = find(isnan(posdata_all{subj}{block}{trial}(2, :)));
-%             ms_present_all{subj}{block}{trial}(ms_present_one) = 0;
-%             ms_present_all{subj}{block}{trial}(ms_present_nan) = 1;
-%         end
-%     end
-% end
 
 % make blinks (missing data, nan) = 1
 blink_present_all = ms_present_all;
@@ -170,7 +121,7 @@ for subj = 1:nsubjects
     end
 end
 
-%
+
 % get total # excluded trials because of blinks or saccades
 badblinktrials = 0;
 badsaccadetrials = 0;
@@ -180,106 +131,18 @@ for subj = 1:nsubjects
         badsaccadetrials = badsaccadetrials + extra{subj, sess}.excludedsaccadetrials;
     end
 end
-%
-%
+
+
 % save('current_data.mat', 'subjects', 'nsubjects', 'ntrials_all', ...
 %     'ntrialstotal_byblock', 'ms_present_all', 'blink_present_all', 'pupil_trace_all', ...
 %     'BinocularSaccades_all', 'posdata_all', 'trial_indices_all', 'ms_amplitudes_all', ...
 %     'ms_directions_all', 'ms_durations_all', 'xyVelocity_all', 'trial_counter_all', ...
-%     'degperpix', 'fps', 'extra', 'nblocks', '-v7.3');
+%     'degperpix', 'fps', 'extra', 'nblocks', 'blockorder', '-v7.3');
 
 %% just load the saved data
-datadir = '/Users/maxlevinson/Documents/McGill/OneDrive - McGill University/neurospeed/UI_eyelink';
-%datadir = '/export04/data/mlevin/UI_eyelink';
+datadir = '/export04/data/mlevin/UI_eyelink';
 addpath(genpath(datadir));
 load('current_data_withblinks.mat');
-
-blockorder = [4 8 2 3 1 9 5 7 6; ... % subj 201
-    9 1 4 6 8 5 3 7 2; ... % subj 202
-    2 5 8 9 4 7 6 1 3; ... % subj 203
-    6 8 3 7 5 4 2 1 9; ... % subj 204
-    8 7 1 2 4 3 9 5 6; ... % subj 205
-    6 8 3 7 5 4 2 1 9; ... %subj 206
-    6 8 3 7 5 4 2 1 9; ... % subj 208
-    7 6 8 3 1 9 2 5 4; ... % subj 209
-    6 8 2 7 5 4 1 3 9; ... % subj 210
-    8 6 3 5 7 4 1 2 9; ... % subj 211
-    7 8 1 4 2 3 5 9 6; ... % subj 212
-    1 6 3 7 9 5 8 2 4; ... % subj 213
-    8 6 2 1 7 3 5 4 9; ... % subj 214
-    1 6 7 5 3 8 4 9 2; ... % subj 215
-    8 4 7 9 3 6 2 5 1; ... % subj 216
-    1 3 6 2 5 9 7 4 8; ... % subj 217
-    2 8 3 9 4 7 1 6 5; ... % subj 218
-    7 1 3 2 9 5 8 4 6; ... % subj 219
-    6 3 1 9 4 8 7 2 5; ... % subj 222
-    4 1 5 6 7 9 8 2 3; ... % subj 223
-    9 1 7 4 2 8 6 5 3]; % subj 224
-
-%% get hazard rates for each block
-% I don't think this is necessary or useful at all anymore.
-
-% hazard rate code from Qi Li
-% we normalize every subject's RTs, combine across subjects for each
-% block, generate hazard rate, then un-normalize back to subject values.
-subj_meanrts = zeros(1, nsubjects);
-for subj = 1:nsubjects
-    subj_rts = [];
-    for block = 1:nblocks
-        subj_rts = [subj_rts; diff(trial_indices_all{subj}{block}(:, 2:3), 1, 2)];
-    end
-    subj_meanrts(subj) = nanmean(subj_rts);
-end
-norm_subjmeans = subj_meanrts ./ mean(subj_meanrts);
-
-block_reactiontimes = cell(1, nblocks);
-nbins = 21;
-xout = nan(nbins, nblocks); xouts = nan(nbins, nsubjects, nblocks);
-pdf = nan(nbins, nblocks); pdfs = nan(nbins, nsubjects, nblocks);
-cdf = nan(nbins, nblocks); cdfs = nan(nbins, nsubjects, nblocks);
-lambda = nan(nbins, nblocks); lambdas = nan(nbins-1, nsubjects, nblocks); % hazard rate
-for block = 1:nblocks
-    for subj = 1:nsubjects
-        block_reactiontimes{block} = [block_reactiontimes{block}; diff(trial_indices_all{subj}{block}(:, 2:3), 1, 2) ./ norm_subjmeans(subj)];
-    end
-    [n, xout(:, block)] = hist(block_reactiontimes{block}, nbins);
-        pdf(:, block) = n / sum(n);
-        cdf(:, block) = cumsum(pdf(:, block));
-        lambda(:, block) = pdf(:, block) ./ (1 - cdf(:, block)); % hazard rate
-end
-lambda = lambda(1:end-1, :);
-%xout = xout(1:end-1, :);
-
-% restore back to subject-specific value ranges
-for block = 1:nblocks
-for subj = 1:nsubjects
-    lambdas(:, subj, block) = lambda(:, block);
-    pdfs(:, subj, block) = pdf(:, block);
-    cdfs(:, subj, block) = cdf(:, block);
-    xouts(:, subj, block) = xout(:, block) .* norm_subjmeans(subj);
-end
-end
-
-
-
-% define hazard rate per subject, per block
-% reactiontimes = cell(nsubjects, nblocks);
-% nbins = 11;
-% xouts = nan(nbins, nsubjects, nblocks);
-% pdfs = nan(nbins, nsubjects, nblocks);
-% cdfs = nan(nbins, nsubjects, nblocks);
-% lambdas = nan(nbins, nsubjects, nblocks); % hazard rate
-% for subj = 1:nsubjects
-%     for block = 1:nblocks
-%         reactiontimes{subj, block} = diff(trial_indices_all{subj}{block}(:, 2:3), 1, 2);
-%         [n, xouts(:, subj, block)] = hist(reactiontimes{subj, block}, nbins);
-%         pdfs(:, subj, block) = n / sum(n);
-%         cdfs(:, subj, block) = cumsum(pdfs(:, subj, block));
-%         lambdas(:, subj, block) = pdfs(:, subj, block) ./ (1 - cdfs(:, subj, block)); % hazard rate
-%     end
-% end
-% lambdas = lambdas(1:end-1, :, :); % remove last one (inf)
-% xouts = xouts(1:end-1, :, :);
 
 %% epoch trials into block averages
 
@@ -816,129 +679,6 @@ all_ntrials_used = nansum(nansum(ntrials_used, 3), 2);
 %                before_press_probability(subj, block) = nanmean(nanmean(block_ms_present(bp500_idx, :), 2)); % avg for -700 ms : -300 ms
 %            end
 
-%% epoch rates by colors / sizes (collapsing across the other dimension)
-% the point is to maximize signal - include more trials in rate estimate.
-
-%weighsubjects = 1; % weigh subjects by usable trial counts? yes or no
-
-ntps_before = 5000; ntps_after = 1000; % around button press
-%ntps_before = 1000; ntps_after = 2000;%20000; % from stim onset
-ntimepoints = ntps_before + ntps_after + 1;
-reference_point = 'button_press'; % button_press or full_trial (around stim onset) or onset_to_bp (around stim onset but stop at bp)
-
-rate_window_length = 1; % for sliding window ms/sec calculation
-stepsize = 1;
-%ms_counts_all = nan((ntimepoints-rate_window_length-1)/stepsize + 1, nsubjects, 3);
-%count_timepoints = rate_window_length/2 + (0:stepsize:(ntimepoints-1-rate_window_length)) - ntps_before; % time stamps for each time window in ms counts / second
-ms_counts_all = nan(ntimepoints, nsubjects, 3);
-baseline_ms_counts = nan(nsubjects, 3);
-count_timepoints = (1:ntimepoints) - ntps_before;
-block_indices = {[1:3], [4:6], [7:9]}; % blocks per color (1, 2, 3)
-%block_indices = {[3 6 9], [2 5 8], [1 4 7],}; % blocks per size (6, 4, 2)
-for clr = 1:3
-    for subj = 1:nsubjects
-        %threeblocks_ms_present = cell(3, 1);
-        clr_ms_present = [];
-        baseline_clr_ms_present = [];
-        for block = block_indices{clr}
-            % get indices
-            nblocktrials = size(ms_present_all{subj}{block}, 2);
-            block_ms_present = nan(ntimepoints, nblocktrials);
-            baseline_block_ms_present = nan(ntimepointsbaseline, nblocktrials);
-            if nblocktrials > 0 % if not missing whole block
-                for trial = 1:nblocktrials
-                    rt = diff(trial_indices_all{subj}{block}(trial, 2:3));
-                    if rt > 0 && rt < 20000 % only use trials with certain RT?
-                        stim_on = trial_indices_all{subj}{block}(trial, 2);
-                        stim_off = trial_indices_all{subj}{block}(trial, 4);
-                        button_press = trial_indices_all{subj}{block}(trial, 3);
-                        % set full trial timing
-                        nan_pad_start_fulltrial = 1000 - (stim_on-1); % if stim onset is a few ms less than ntps_before
-                        nan_pad_end_fulltrial = 20000 - (stim_off - stim_on); % if trial didn't last full 20 seconds (i.e. always when button is pressed)
-                        if nan_pad_start_fulltrial <= 0
-                            first_idx_fulltrial = stim_on - 1000;
-                            nan_pad_start_fulltrial = 0;
-                        elseif nan_pad_start_fulltrial > 0
-                            first_idx_fulltrial = 1;
-                        end
-                        if nan_pad_end_fulltrial < 0 % if it goes over 20s for some reason
-                            last_idx_fulltrial = stim_on + 20000;
-                        else
-                            last_idx_fulltrial = stim_off;
-                        end
-                        switch reference_point % epoch around button press or around stim onset?
-                            case 'button_press'
-                                nan_pad_start = ntps_before - (button_press - stim_on); % if RT is faster than ntps_before
-                                nan_pad_end = ntps_after-(stim_off - button_press);% if stim offset is a few ms before ntps_after
-                                if nan_pad_start >= 0
-                                    first_idx = stim_on;
-                                else
-                                    first_idx = button_press - ntps_before;
-                                    nan_pad_start = 0;
-                                end
-                                if nan_pad_end < 0
-                                    last_idx = button_press + ntps_after;
-                                    nan_pad_end = 0;
-                                else
-                                    last_idx = stim_off;
-                                    bp500_idx = (ntps_before-700):(ntps_before-300); % avg for each block / subject
-                                end
-                            case 'full_trial'
-                                nan_pad_start = ntps_before - (stim_on-1); % if stim onset is a few ms less than ntps_before
-                                nan_pad_end = ntps_after - (stim_off - stim_on); % if trial didn't last full 20 seconds (i.e. always when button is pressed)
-                                if nan_pad_start <= 0
-                                    first_idx = stim_on - ntps_before + 1;
-                                    nan_pad_start = 0;
-                                elseif nan_pad_start > 0
-                                    first_idx = 1;
-                                end
-                                if nan_pad_end < 0 % if it goes over 20s for some reason
-                                    last_idx = stim_on + ntps_after;
-                                else
-                                    last_idx = stim_off;
-                                end
-                            case 'onset_to_bp'
-                                nan_pad_start = ntps_before - (stim_on-1); % if stim onset is a few ms less than ntps_before
-                                nan_pad_end = ntps_after - (button_press - stim_on); % end after button press
-                                if nan_pad_start <= 0
-                                    first_idx = stim_on - ntps_before + 1;
-                                    nan_pad_start = 0;
-                                elseif nan_pad_start > 0
-                                    first_idx = 1;
-                                end
-                                if nan_pad_end < 0 % if it goes over 20s for some reason
-                                    last_idx = stim_on + ntps_after;
-                                else
-                                    last_idx = button_press;
-                                end
-                        end
-                        block_ms_present(:, trial) = [nan(1, nan_pad_start), ms_present_all{subj}{block}{trial}(first_idx:last_idx), nan(1, nan_pad_end)];
-                        %extranan = buffer_baseline_idx(end) - numel(ms_present_all{subj}{block}{trial}); curr_ms_present_baseline = [ms_present_all{subj}{block}{trial}, nan(1, extranan)]; curr_ms_present_baseline((button_press-2000):end) = nan;
-                        %baseline_block_ms_present(:, trial) = curr_ms_present_baseline(buffer_baseline_idx);
-                    end
-                end
-            end
-            clr_ms_present = [clr_ms_present, block_ms_present];
-            %baseline_clr_ms_present = [baseline_clr_ms_present, baseline_block_ms_present];
-        end
-        ms_counts_all(:, subj, clr) = cross_trial_ms_rate(clr_ms_present, 'alpha');
-        %curr_baseline_r = cross_trial_ms_rate(baseline_clr_ms_present, 'alpha');
-        %curr_baseline_r = curr_baseline_r(baseline_sub_idx);
-        %baseline_ms_counts(subj, clr) = nanmean(curr_baseline_r);
-        baseline_ms_counts(subj, clr) = nanmean(ms_counts_all(1:2000, subj, clr)); % first 2000 of epoch = baseline.
-    end
-end
-
-% normalize everything by subject baseline means
-norm_ms_counts_all = nan(size(ms_counts_all));
-norm_baseline_ms_counts = nan(size(baseline_ms_counts));
-for subj = 1:nsubjects
-    %norm_ms_counts_all(:, subj, :) = ms_counts_all(:, subj, :);
-    norm_ms_counts_all(:, subj, :) = ms_counts_all(:, subj, :) ./ nanmean(baseline_ms_counts(subj, :));
-    %norm_ms_counts_all(:, subj, :) = (ms_counts_all(:, subj, :) - nanmean(baseline_ms_counts(subj, :))) ./ nanmean(baseline_ms_counts(subj, :)) .* 100;
-    norm_baseline_ms_counts(subj, :) = baseline_ms_counts(subj, :) ./ nanmean(baseline_ms_counts(subj, :));
-end
-
 %% plot averaged by size or contrast
 % average contrasts together or averaged sizes together
 size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
@@ -1391,31 +1131,14 @@ for subj = 1:nsubjects
     for block = 1:nblocks
         for trial = 1:numel(BinocularSaccades_all{subj}{block})
             if ~isempty(BinocularSaccades_all{subj}{block}{trial})
-                % engbert
-                %                 all_xy_amplitudes = [all_xy_amplitudes, BinocularSaccades_all{subj}{block}{trial}.msXYAmplitude];
-                %                 all_xy_peakvelocities = [all_xy_peakvelocities, BinocularSaccades_all{subj}{block}{trial}.msMaxXYVel];
-                %                 all_durations = [all_durations, BinocularSaccades_all{subj}{block}{trial}.msLengths];
-                % martinez-conde
-                if isfield(BinocularSaccades_all{subj}{block}{trial}, 'XYAmplitude')
-                all_xy_amplitudes = [all_xy_amplitudes; BinocularSaccades_all{subj}{block}{trial}.XYAmplitude];
-                all_xy_peakvelocities = [all_xy_peakvelocities; BinocularSaccades_all{subj}{block}{trial}.peakXYVelocity];
-                all_durations = [all_durations; BinocularSaccades_all{subj}{block}{trial}.duration];
-                all_subjnums = [all_subjnums; repmat(subj, numel(BinocularSaccades_all{subj}{block}{trial}.duration), 1)];
-            % edfImport
-                elseif isfield(BinocularSaccades_all{subj}{block}{trial}, 'Amplitude')
                 all_xy_amplitudes = [all_xy_amplitudes; BinocularSaccades_all{subj}{block}{trial}.Amplitude];
                 all_xy_peakvelocities = [all_xy_peakvelocities; BinocularSaccades_all{subj}{block}{trial}.vPeak];
                 all_durations = [all_durations; BinocularSaccades_all{subj}{block}{trial}.Duration];
                 all_subjnums = [all_subjnums; repmat(subj, numel(BinocularSaccades_all{subj}{block}{trial}.Duration'), 1)];
-                end
             end
         end
     end
 end
-
-% % convert to dva if needed
-% all_xy_amplitudes = all_xy_amplitudes * degperpix;
-% all_xy_peakvelocities = all_xy_peakvelocities * degperpix;
 
 % remove too big or too small
 all_xy_amplitudes_sort = all_xy_amplitudes(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
@@ -1424,242 +1147,13 @@ all_subjnums_sort = all_subjnums(all_xy_amplitudes < 2 & all_xy_peakvelocities <
 all_durations_sort = all_durations(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
 figure; hold on;
 scatter(all_xy_amplitudes_sort(all_durations_sort > 0), all_xy_peakvelocities_sort(all_durations_sort > 0), '.k', 'MarkerFaceAlpha', .05, 'MarkerEdgeAlpha', .05);
-% clrs = colormap;
-% for subj = 1:nsubjects
-%     scatter(all_xy_amplitudes_sort(all_subjnums_sort == subj), all_xy_peakvelocities_sort(all_subjnums_sort == subj), '.', 'MarkerFaceColor', clrs(subj * 3, :));
-% end
-%ylim([3 40]); xlim([0.1 2]); % martinez-conde scales
+
 set(gca, 'xscale', 'log'); set(gca, 'yscale', 'log');
 set(gca, 'FontSize', 26);
    H = gca;
     H.LineWidth = 2;
 set(gca, 'FontName', 'Helvetica')
-%H.XAxis.TickLength = [0 0];
 xlabel('amplitude (dva)', 'FontName', 'Helvetica'); ylabel('velocity (dva/s)', 'FontName', 'Helvetica');
-
-%% split by direction
-% 2 = left inwards, 1 = left outwards, -1 = right outwards, -2 = right inwards
-backup_ms_present_all = ms_present_all;
-% for analysis: then set ms_present_all equal to one of the below
-out_ms_present_all = ms_present_all;
-in_ms_present_all = ms_present_all;
-left_ms_present_all = ms_present_all;
-right_ms_present_all = ms_present_all;
-
-for subj = 1:nsubjects
-    for block = 1:nblocks
-        nblocktrials = size(ms_present_all{subj}{block}, 2);
-        for trial = 1:nblocktrials
-            out_ms_present_all{subj}{block}{trial}(abs(ms_directions_all{subj}{block}{trial}) == 2) = 0;
-            in_ms_present_all{subj}{block}{trial}(abs(ms_directions_all{subj}{block}{trial}) == 1) = 0;
-            left_ms_present_all{subj}{block}{trial}(ms_directions_all{subj}{block}{trial} < 0) = 0;
-            right_ms_present_all{subj}{block}{trial}(ms_directions_all{subj}{block}{trial} > 0) = 0;
-        end
-    end
-end
-
-%% comparing baseline to -500ms period before button press
-mean_baseline_rate = nanmean(baseline_ms_counts, 1);
-stderr_baseline_rate = nanstd(baseline_ms_counts, 0, 1) ./ sqrt(nsubjects);
-mean_bp_rate = nanmean(min_rates, 1);
-stderr_bp_rate = nanstd(min_rates, 0, 1) ./ sqrt(nsubjects);
-
-perc_change_prob = (before_press_probability - baseline_probability) ./ baseline_probability .* 100;
-perc_change_avg_prob = (mean_bp_prob - mean_baseline_prob) ./ mean_baseline_prob .* 100;
-figure;
-barwitherr([stderr_baseline_rate', stderr_bp_rate'], [mean_baseline_rate', mean_bp_rate']);
-figure;
-bar(perc_change_avg_prob);
-
-%% look at minimum rate per condition
-min_rates = nan(nsubjects, nblocks); % take minimum/min mean of timeseries per subject, per block.
-post_rates = nan(nsubjects, nblocks); % take post-button press window
-min_amps = nan(nsubjects, nblocks);
-min_slip = nan(nsubjects, nblocks);
-decr_start = nan(nsubjects, nblocks); % 700ms time window surrounding the "start" of the microsaccade decrease
-window_use = (ntps_before-800):(ntps_before-300); % -800ms to -300ms
-post_window_use = (ntps_before+150):(ntps_before+550); % +150ms to +550ms
-start_window_use = (ntps_before-2300):(ntps_before-1800);
-Nb_window_use = (ntps_before/50-800/50):(ntps_before/50-300/50);
-Nb_post_window_use = (ntps_before/50+150/50):(ntps_before/50+550/50);
-for ss = 1:nsubjects
-    for bb = 1:nblocks
-        %min_rates(ss, bb) = nanmin(ms_counts_all(window_use, ss, bb)); % raw MIN
-        min_rates(ss, bb) = nanmean(ms_counts_all(window_use, ss, bb)); % raw.
-        %min_rates(ss, bb) = nanmean(ms_counts_all(window_use+all_subj_shifts(ss, bb), ss, bb)); % raw with subj shift
-        %min_rates(ss, bb) = nanmean(norm_ms_counts_all(window_use, ss, bb)); % normalized to subject mean.
-        %min_rates(ss, bb) = nanmean(norm_ms_counts_all(window_use+subj_shifts(ss), ss, bb)); % normalized to subject mean with subj shift
-        %min_rates(ss, bb) = (nanmean(ms_counts_all(window_use, ss, bb)) - baseline_ms_counts(ss, bb)) ./ baseline_ms_counts(ss, bb);% .* 100; % percent change from block baseline mean.
-        %min_rates(ss, bb) = (nanmean(norm_ms_counts_all(window_use, ss, bb)) - norm_baseline_ms_counts(ss, bb)) ./ norm_baseline_ms_counts(ss, bb);% .* 100; % normalized percent change from norm block baseline mean.
-        %min_rates(ss, bb) = (nanmean(ms_counts_all(window_use, ss, bb)) - nanmean(baseline_ms_counts(ss, :))) ./ nanmean(baseline_ms_counts(ss, :));% .* 100; % percent change from subject baseline mean.
-        %min_rates(ss, bb) = nanmean(norm_ms_counts_all(window_use, ss, bb)) - norm_baseline_ms_counts(ss, bb); % norm minus normalized block baseline.
-        %min_rates(ss, bb) = nanmean(norm_ms_counts_all(window_use, ss, bb)) ./ norm_baseline_ms_counts(ss, bb); % norm divided by normalized block baseline.
-        %min_rates(ss, bb) = nanmean(norm_ms_counts_all(window_use+subj_shifts(ss), ss, bb)) - norm_baseline_ms_counts(ss, bb); % norm minus normalized block baseline with subj shift
-        post_rates(ss, bb) = nanmean(ms_counts_all(post_window_use, ss, bb)); % raw.
-        %post_rates(ss, bb) = nanmean(norm_ms_counts_all(post_window_use, ss, bb)); % normalized to subject mean
-        min_amps(ss, bb) = nanmean(mean_amplitudes_all(window_use, ss, bb)); % raw
-        %min_amps(ss, bb) = nanmean(mean_amplitudes_all(window_use+all_subj_shifts(ss, bb), ss, bb)); % raw with subj shift
-        post_amps(ss, bb) = nanmean(mean_amplitudes_all(post_window_use, ss, bb)); % raw
-        min_slip(ss, bb) = nanmean(mean_Nb_all(Nb_window_use, ss, bb)); % raw
-        post_slip(ss, bb) = nanmean(mean_Nb_all(Nb_post_window_use, ss, bb));
-        %min_rates(ss, bb) = nanmean(ms_counts_all(window_use, ss, bb)) - baseline_ms_counts(ss, bb); % raw difference
-        %min_rates(ss, bb) = nanmean(ms_counts_all(window_use, ss, bb)) ./ baseline_ms_counts(ss, bb); % raw divide by block baseline (gives some inf)
-        decr_start(ss, bb) = nanmean(ms_counts_all(start_window_use+subj_shifts(ss), ss, bb)); % raw
-        decr_start(ss, bb) = nanmean(norm_ms_counts_all(start_window_use+subj_shifts(ss), ss, bb)); % subj normalized
-        %min_rates(ss, bb) = min_rates(ss, bb) - decr_start(ss, bb); % subtract from decrease start
-    end
-end
-mean_min_rates = nanmean(min_rates, 1);
-stderr_min_rates = nanstd(min_rates, 0, 1) ./ sqrt(nsubjects);
-
-% group by color
-color_min_rates = [mean(min_rates(:, 1:3), 2), mean(min_rates(:, 4:6), 2), mean(min_rates(:, 7:9), 2)];
-size_min_rates = [mean(min_rates(:, [3 6 9]), 2), mean(min_rates(:, [2 5 8]), 2), mean(min_rates(:, [1 4 7]), 2)];
-color_baseline_rates = [mean(baseline_ms_counts(:, 1:3), 2), mean(baseline_ms_counts(:, 4:6), 2), mean(baseline_ms_counts(:, 7:9), 2)];
-size_baseline_rates = [mean(baseline_ms_counts(:, [3 6 9]), 2), mean(baseline_ms_counts(:, [2 5 8]), 2), mean(baseline_ms_counts(:, [1 4 7]), 2)];
-
-% check prevalence of an effect
-sum(color_min_rates(:, 1) < color_min_rates(:, 2) & color_min_rates(:, 2) < color_min_rates(:, 3))
-sum(size_min_rates(:, 1) < size_min_rates(:, 2) & size_min_rates(:, 2) < size_min_rates(:, 3))
-sum(size_min_rates(:, 1) > size_min_rates(:, 3))
-sum(color_baseline_rates(:, 1) < color_baseline_rates(:, 2) & color_baseline_rates(:, 2) < color_baseline_rates(:, 3))
-sum(color_baseline_rates(:, 1) < color_baseline_rates(:, 3))
-
-
-
-% normalize min_rates by subject mean of min_rates?
-%min_rates(ss, :) = min_rates(ss, :) ./ nanmean(min_rates(ss, :)); % normalize min_rates by subject mean of min_rates.
-
-
-% % averaged across subjects first
-% mean_min_rates = nan(1, nblocks);
-% stderr_min_rates = nan(1, nblocks);
-% for bb = 1:nblocks
-%     %mean_min_rates(bb) = nanmin(nanmean(ms_counts_all(window_use, :, bb), 2));
-%     mean_min_rates(bb) = nanmean(nanmean(norm_ms_counts_all(window_use, :, bb), 2));
-%     stderr_min_rates(bb) = nanmean(nanstd(norm_ms_counts_all(window_use, :, bb), 0, 2)) ./ sqrt(nsubjects);
-% end
-%
-% % then avged by color (1, 2, 3) and size (6, 4, 2)
-% color_mean_min_rates = [mean(mean_min_rates(1:3)), mean(mean_min_rates(4:6)), mean(mean_min_rates(7:9))]
-% size_mean_min_rates = [mean(mean_min_rates([3 6 9])), mean(mean_min_rates([2 5 8])), mean(mean_min_rates([1 4 7]))]
-%
-% % scatter plot min rate by mean rt (per block/subject)
-% %first run analyze_group_data.m
-% %permuted_rts = squeeze(permute(all_mean_rts(1, :, :), [3 2 1]));
-% permuted_rts = squeeze(permute(norm_all_mean_rts(1, :, :), [3 2 1]));
-% %plotrates = min_rates(:, [1:9]);
-% %plotrates = norm_baseline_ms_counts(:);
-% %plotrates = nanmean(norm_baseline_ms_counts, 2);
-% plotrates = post_rates(:);
-% %plotrts = permuted_rts(:, [1:9]);
-% %plotrts = nanmean(permuted_rts, 2);
-% %plotrts = permuted_rts(:);
-% %plotrts = norm_rts_all(:);
-% plotrts = post_slip(:);
-% x = plotrates(~isnan(plotrates) & ~isnan(plotrts));
-% y = plotrts(~isnan(plotrates) & ~isnan(plotrts));
-% X = [ones(length(x), 1) x];
-% b = X \ y;
-% ypred = X*b;
-%
-% figure;
-% scatter(x,y);
-% hold on;
-% plot(x, ypred);
-% xlabel('minimum ms rate'); ylabel('mean rt');
-%
-%
-% % average within conditions then scatter
-% rates = baseline_ms_counts;%min_rates;
-% rts = permuted_rts;
-%
-% colormeanrates = [nanmean(rates(:, 1:3), 2), nanmean(rates(:, 4:6), 2), nanmean(rates(:, 7:9), 2)];
-% sizemeanrates = [nanmean(rates(:, [3 6 9]), 2), nanmean(rates(:, [2 5 8]), 2), nanmean(rates(:, [1 4 7]), 2)];
-%
-% colormeanrts = [nanmean(rts(:, 1:3), 2), nanmean(rts(:, 4:6), 2), nanmean(rts(:, 7:9), 2)];
-% sizemeanrts = [nanmean(rts(:, [3 6 9]), 2), nanmean(rts(:, [2 5 8]), 2), nanmean(rts(:, [1 4 7]), 2)];
-%
-% x = colormeanrates(:); y = colormeanrts(:);
-% figure; scatter(colormeanrates(:), colormeanrts(:));
-%
-% x = sizemeanrates(:); y = sizemeanrts(:);
-% figure; scatter(sizemeanrates(:), sizemeanrts(:));
-%
-% X = [ones(length(x), 1) x];
-% b = X \ y;
-% ypred = X*b;
-%
-% figure;
-% scatter(x,y);
-% hold on;
-% plot(x, ypred);
-% xlabel('minimum ms rate'); ylabel('mean rt');
-%
-%
-% % anova on min rates
-% %snums = repmat((1:18)', 9, 1);
-% %y = min_rates(:);
-% %clrs = [ones(18*3, 1); 2*ones(18*3, 1); 3*ones(18*3, 1)];
-% %szs = repmat([ones(18, 1); 2*ones(18, 1); 3*ones(18, 1)], 3, 1);
-% within = table(categorical([1 1 1 2 2 2 3 3 3])', categorical([3 2 1 3 2 1 3 2 1]'), 'VariableNames', {'color', 'size'});
-% blocknames = {'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9'};
-% trates = array2table(min_rates, 'VariableNames', blocknames);
-% rm = fitrm(trates,'b1-b9~1', 'WithinDesign', within);
-% ranovatbl = ranova(rm, 'WithinModel', 'color*size')
-%
-% % post hoc
-%
-%
-% % anova on baseline rates
-% norm_baseline_ms_counts = nan(size(baseline_ms_counts));
-% for subj = 1:nsubjects
-%     norm_baseline_ms_counts(subj, :) = baseline_ms_counts(subj, :) ./ nanmean(baseline_ms_counts(subj, :));
-% end
-% trates = array2table(baseline_ms_counts, 'VariableNames', blocknames);
-% rm = fitrm(trates,'b1-b9~1', 'WithinDesign', within);
-% ranovatbl = ranova(rm, 'WithinModel', 'color*size')
-
-
-% store all min rate data in .csv table.
-snums = repmat((1:nsubjects)', 9, 1);
-y = min_rates(:);
-basel = baseline_ms_counts(:);
-baseamp = baseline_amplitudes(:);
-baseslip = baseline_Nb(:);
-baseblink = baseline_blink_rate(:);
-nonan_idx = find(~isnan(y) & ~isinf(y) & ~isnan(basel));
-rtimes = mean_rts_all(:) ./ 1000;
-%nonan_idx = find(~isnan(rtimes)); % if analyzing only trials w/o microsaccades
-dstarts = decr_start(:);
-clrs = [ones(nsubjects*3, 1); 2*ones(nsubjects*3, 1); 3*ones(nsubjects*3, 1)];
-szs = repmat([2*ones(nsubjects, 1); 4*ones(nsubjects, 1); 6*ones(nsubjects, 1)], 3, 1);
-% scale szs by cortical magnification
-A = 0.063; % from Engel et al
-l0 = 36.54 * A;
-%M_szs = 1 ./ (A .* szs); % dl
-M_szs = (log(szs) - l0) ./ A; % l
-% extra measures
-rate_post = post_rates(:);
-ampl_min = min_amps(:);
-ampl_post = post_amps(:);
-slip_min = min_slip(:);
-slip_post = post_slip(:);
-
-tabledata = [snums(nonan_idx), y(nonan_idx), basel(nonan_idx), baseblink(nonan_idx), dstarts(nonan_idx), rtimes(nonan_idx), clrs(nonan_idx), szs(nonan_idx), M_szs(nonan_idx), rate_post(nonan_idx), ampl_min(nonan_idx), ampl_post(nonan_idx), slip_min(nonan_idx), slip_post(nonan_idx), baseamp(nonan_idx), baseslip(nonan_idx)];
-T = array2table(tabledata, 'VariableNames', {'subject', 'msratemin', 'baselinerate', 'baselineblinks', 'msratestart', 'RT', 'contrast', 'eccentricity', 'scaled_eccentricity', 'msratepost', 'amplmin', 'amplpost', 'slipmin', 'slippost', 'baselineampl', 'baselineslip'});
-writetable(T, 'bhv_data/minrates.csv');
-%writetable(T, 'bhv_data/noms_minrates.csv');
-%writetable(T, 'bhv_data/onlyms_subset_minrates.csv');
-
-%% regress out stim-evoked pupil response.
-% first compute & plot full trial epoch
-% then extract the grand avg timeseries up to 2000s post-stim
-% should capture the whole transient.
-% (start at 51 ms to avoid artifact at very beginning)
-first2000avgpupil = [zeros(50, 1); mean_pupil_area(51:3000); zeros(18001, 1)];
-
-% then compute button_press epoch
 
 %% plot each trial gaze timecourses for quality control
 subj = 21;
@@ -1721,154 +1215,3 @@ for iBlock = 1:nblocks
         plot(time, velocitymsavg, 'k', 'LineWidth', 3);
     end
 end
-
-%% plot transition probability following each microsaccade
-smooth_transition_probabilities_all = smoothdata(transition_probabilities_all, 'movmean', 100);
-%smooth_transition_probabilities_all = smoothdata(baseline_transition_probabilities, 'movmean', 100);
-size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
-color_indices = [1 1 1 2 2 2 3 3 3]; % 1=low contrast, 2=medium, 3=high contrast
-all_indices = [1 1 1 1 1 1 1 1 1];
-
-which2use = 'size'; % size or color or all (average across all blocks)
-subjects2use = 1:nsubjects;%[1:10, 13:nsubjects];%[1:nsubjects]; % normally all 
-overlay = 1; % overlay the plots on one axis or use subplots
-plotcolors = {[1 0 0], [0 1 0], [0 0 1]};
-nobounds = 0; % just plot line, no stderr bounds?
-baseline_correct = 1;
-
-figure; hold on;
-%for subj = 1:nsubjects
-%    subjects2use = subj;
-%figure; hold on;
-for i = 1:3
-    switch which2use
-        case 'size'
-            if overlay; hold on; else; subplot(1, 3, i); end
-            if size(ms_counts_all, 3) == 9 % if all blocks epoched separately
-                curr_block_idx = find(size_indices == i); % if plotting by size
-            elseif size(ms_counts_all, 3) == 3 % if jointly combined blocks within size
-                curr_block_idx = i;
-            end
-        case 'color'
-            if overlay; hold on; else; subplot(1, 3, i); end
-            if size(ms_counts_all, 3) == 9 % if all blocks epoched separately
-                curr_block_idx = find(color_indices == i); % if plotting by color
-            elseif size(ms_counts_all, 3) == 3 % if jointly combined blocks within color
-                curr_block_idx = i;
-            end
-        case 'all'
-            if size(ms_counts_all, 3) == nblocks % if all blocks epoched separately
-                curr_block_idx = find(all_indices);
-            elseif size(ms_counts_all, 3) == 3 % if jointly combined across 1 dimension
-                curr_block_idx = [1 2 3];
-            end
-            plotcolors = {[0 0 0]};
-    end
-    
-    if baseline_correct
-        transition_probability_uncorr = smooth_transition_probabilities_all(:, subjects2use, curr_block_idx);
-        curr_probability_baseline = squeeze(nanmean(baseline_transition_probabilities(trans_ntps_before:trans_ntps_before+2000, subjects2use, curr_block_idx), 1));
-                transition_probability_corr = nan(size(transition_probability_uncorr));
-                for bb = 1:size(transition_probability_uncorr, 3) % per block
-                    for ss = 1:size(transition_probability_uncorr, 2) % per subject
-                        curr_uncorr = transition_probability_uncorr(:, ss, bb);
-                        % baseline correct
-                        curr_base = curr_probability_baseline(ss, bb); % from computed baseline
-                        %curr_base = nanmean(curr_uncorr(1:(1000/stepsize))); % from this actual epoch
-                        transition_probability_corr(:, ss, bb) = (curr_uncorr - curr_base) ./ curr_base .* 100; % percent change
-                        %transition_probability_corr(:, ss, bb) = curr_uncorr - curr_base; % just subtract baseline
-                        %transition_probability_corr(:, ss, bb) = curr_uncorr ./ curr_base; % normalize by baseline (base=1)
-                        % z score
-                        %transition_probability_corr(:, ss, bb) = (curr_uncorr - nanmean(curr_uncorr)) ./ nanstd(curr_uncorr);
-                    end
-                end
-                transition_probability_corr(isinf(transition_probability_corr)) = nan;
-                transition_probability_curr = nanmean(transition_probability_corr, 3);
-    else
-        transition_probability_curr = nanmean(smooth_transition_probabilities_all(:, subjects2use, curr_block_idx), 3);
-    end
-    
-            mean_transition_probability = nanmean(transition_probability_curr, 2); % average by subject
-            stderr_transition_probability = nanstd(transition_probability_curr, 0, 2) ./ sqrt(nsubjects);
-            %plot((-ntps_before:ntps_after)' * 1000/fps, smoothed_prob);
-            bp = boundedline([-trans_ntps_before:trans_ntps_after], mean_transition_probability, stderr_transition_probability, 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
-
-            set(bp, 'LineWidth', 4);
-            
-            
-    % add y/x axis labels
-    if ~overlay && ~strcmp(which2use, 'all')
-        if i == 1
-            ylabel('small');
-        elseif i == 2
-            ylabel('medium');
-        elseif i == 3
-            ylabel('large');
-            xlabel('time (s)');
-        end
-    else
-        if ~baseline_correct
-            ylabel('probability');
-        elseif baseline_correct
-            ylabel(['probability change from baseline']);
-        end
-        xlabel('time (s)');
-        if strcmp(which2use, 'all')
-            set(bp, 'Color', [0 0 0]);
-            %break % stop for loop
-        end
-    end
-    if strcmp(which2use, 'all')
-        break
-    end
-end
-switch which2use
-    case 'size'
-        if overlay
-            legend({'large', 'medium', 'small'});
-            sl = title(['by boundary eccentricity']);
-        else
-            sl = suplabel('center size', 'y');
-        end
-        set(sl, 'FontSize', 26);
-    case 'color'
-        if overlay
-            legend({'low', 'medium', 'high'});
-            sl = title(['by color contrast']);
-        else
-            sl = suplabel('color contrast', 'y');
-        end
-        set(sl, 'FontSize', 26);
-end
-set(gca, 'FontSize', 26);
-
-% set subject color if plotting just 1 subject at a time
-if numel(subjects2use) == 1
-    clrs = colormap;
-    set(bp, 'Color', clrs(subjects2use * 3, :));
-    set(bp, 'LineWidth', 1); % or make line smaller
-    %set(bp, 'Color', [0.5 0.5 0.5]);
-end
-
-%end
-
-legend boxoff
-
-%set(gcf, 'WindowState', 'maximized')
-set(gcf, 'Position', [440 314 563 433]);
-
-%% plot immobilization duration scatter, colored by size or contrast
-plotcolors = {[1 0 0], [0 1 0], [0 0 1]};
-% by size
-lowidx = eccentricities == 6;
-medidx = eccentricities == 4;
-highidx = eccentricities == 2;
-% by color
-lowidx = contrasts == 1;
-medidx = contrasts == 2;
-highidx = contrasts == 3;
-
-figure; hold on;
-scatter(ones(size(immobilization_durations(lowidx))), immobilization_durations(lowidx), 'MarkerFaceColor', plotcolors{1}, 'MarkerFaceAlpha', 0.05, 'MarkerEdgeColor', plotcolors{1}, 'MarkerEdgeAlpha', 0.05, 'jitter', 'on');
-scatter(ones(size(immobilization_durations(medidx))), immobilization_durations(medidx), 'MarkerFaceColor', plotcolors{2}, 'MarkerFaceAlpha', 0.05, 'MarkerEdgeColor', plotcolors{2}, 'MarkerEdgeAlpha', 0.05, 'jitter', 'on')
-scatter(ones(size(immobilization_durations(highidx))), immobilization_durations(highidx), 'MarkerFaceColor', plotcolors{3}, 'MarkerFaceAlpha', 0.05, 'MarkerEdgeColor', plotcolors{3}, 'MarkerEdgeAlpha', 0.05, 'jitter', 'on');
