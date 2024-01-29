@@ -2,7 +2,6 @@ function [msrate, msrateshuffled] = cross_trial_ms_rate(block_ms_present, smooth
 % cross-trial microsaccade rate
 % block_ms_present: ntimepoints x ntrials ms present
 if nargin < 2
-    %rate_window_length = 500; % in timepoints (ms at 1000 Hz)
     smoothmethod = 'alpha'; % default smoothing is alpha weighting.
 end
 if nargin < 3 % input type not specified (ongoing ms present or ms onset indices)
@@ -38,7 +37,7 @@ end
 if ~strcmp(smoothmethod, 'amplitude') % most cases
     msrate = smooth_rate(block_ms_onsets, smoothmethod);
     msrateshuffled = smooth_rate(shuffled_block_ms_onsets, smoothmethod);
-else % if using special amplitude method
+else % if using special method for computing ms amplitude across time
     amplitudes = nanmean(block_ms_present, 2);
     window_length = 100; stepsize = 100;
     nwindows = (length(amplitudes) - window_length-1) / stepsize + 1;
@@ -53,50 +52,6 @@ else % if using special amplitude method
     r(win_idx) = curr_amp;
     end
 end
-
-
-%% sliding window, variable step size
-% %ntrials = size(ms_present, 2);
-% nwindows = (length(ms_present) - rate_window_length-1) / stepsize + 1;
-% r = nan(nwindows, 1);
-% win_idx = 0;
-% for win_start = 1:stepsize:(length(ms_present)-rate_window_length)
-%     win_idx = win_idx + 1;
-%     curr_window_idx = [win_start:win_start+(rate_window_length-1)];
-%     curr_window = ms_present(curr_window_idx);
-%     if sum(isnan(curr_window)) < rate_window_length/2 % if less than half of timepoints are nans, use the window
-%         curr_n_ms = nansum(curr_window);% == 1);
-%     else % otherwise if too many nans, skip this window
-%         curr_n_ms = nan;
-%     end
-%     r(win_idx) = curr_n_ms;
-% end
-% %r = smoothdata(r, 'gaussian', 100);
-% %r = smoothdata(r, 'movmean', 100);
-% %r = sgolayfilt(r, 1, 101); % Savitzky-Golay filter
-% 
-% % causal kernel: convolve with the alpha function weight thing
-% winsz = 1001; % window length for window function.
-% alph = 1/50;
-% taus = 1:winsz;
-% t = median(taus);
-% taus = (taus - t) * -1;
-% taus(taus<0) = 0; % prevent impact of tau > time t
-% w = zeros(size(taus));
-% w = alph^2 .* taus .* exp(-alph .* taus);
-% w = w(:) / sum(w);
-% r = convn(r, w, 'same');
-% 
-% % ( gaussian example for reference)
-%  %   h = exp(-((1:winsz) - ceil(winsz/2)).^2/(2*sig^2));
-%  %   h = h(:) / sum(h);
-% 
-% % convert to ms/sec
-% r = r * (1000 / rate_window_length) / ntrials;
-% 
-% % account for decay / delay (shift r by 1/alpha ms)
-% dlay = 1/alph;
-% rhat = [nan(dlay, 1); r(1:end-dlay)];
 
 %% rate function.
 function r = smooth_rate(block_onsets, smoothmethod)

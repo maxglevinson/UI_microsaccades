@@ -34,11 +34,6 @@ full_data_stds_perc_clicked = std(subj_means_perc_clicked, 0, 2);
 
 
 % store all illusion data in .csv table
-% subjectnums = [];
-% for s = 1:nsubjects
-%     subjectnums = [subjectnums; s * ones(450, 1)];
-% end
-% full_behavior = [subjectnums, all_data];
 full_behavior = all_data;
 full_behavior(:, end) = (full_behavior(:, end) / 10) - 27; % convert contrast to 1 (low), 2 (med), 3 (high)
 T = array2table(full_behavior, 'VariableNames', {'subject', 'trialtype', 'block', 'ignore', 'trial', 'pressed', 'FT', 'medianfixdist', 'meanfixdist', 'maxfixdist', 'eccentricity', 'naignore', 'contrast'});
@@ -51,7 +46,6 @@ for s = 1:nsubjects
     %norm_all_mean_rts(:, :, s) = all_mean_rts(:, :, s) .* curr_scalars;
     norm_all_mean_rts(:, :, s) = all_mean_rts(:, :, s); % don't normalize
 end
-
 
 % plot mean rts for each individual subject in their own figure
 for subj = 1:nsubjects
@@ -91,7 +85,6 @@ end
 
 % these subjects don't show expected contrast OR size effect:
 % 211, 217, 223.
-
 
 
 mean_mean_rts = nanmean(norm_all_mean_rts, 3);

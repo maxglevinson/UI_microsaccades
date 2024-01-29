@@ -4,11 +4,10 @@ function [mean_rts_by_block, percentage_clicked_by_block, reorder, median_dists,
 %   sizes   2 4 6 2 4 6 2 4 6
 %   colors  1 1 1 2 2 2 3 3 3
 
-scripts_dir = '/Users/maxlevinson/Documents/McGill/OneDrive - McGill University/neurospeed/UI_eyelink';
-%scripts_dir = '/export04/data/mlevin/UI_eyelink';
+scripts_dir = '/export04/data/mlevin/UI_eyelink';
 data_dir = [scripts_dir, '/bhv_data'];
 
-%subj = '207'; % enter subject code here
+%subj = '207'; % enter subject code here if not set in argument
 subj = num2str(subj);
 %sess = 'allsessions'; % enter session number here, or 'allsessions'
 sess = num2str(sess);
@@ -47,7 +46,7 @@ blocksize = data(use_idx, 11);
 mean_rts_by_block = zeros(3, numel(unique(blocks)));
 std_rts_by_block = zeros(3, numel(unique(blocks)));
 percentage_clicked_by_block = zeros(3, numel(unique(blocks)));
-illusion_data = zeros(sum(trialtypes==1), size(data, 2));%3); % illusion rts, contrasts, center sizes
+illusion_data = zeros(sum(trialtypes==1), size(data, 2)); % illusion rts, contrasts, center sizes
 mean_shiftstarts = nan(1, numel(unique(blocks)));
 for block = unique(blocks)'
     for tt = 1:3
@@ -152,18 +151,3 @@ xticks(1:3); xticklabels({'small', 'medium', 'large'});
 set(gca, 'FontSize', 20);
 ylabel('RT (s)'); xlabel('center size');
 end
-
-%%
-
-% % consolidate behavior to quickly look at (during brainstorm analyses)
-% blocks = 1:6;
-% databyblock = nan(30, 13, 6);
-% for b = blocks
-%     databyblock(:,:,b) = data(data(:, 3) == b, :);
-% end
-% 
-% trialtypebyblock = squeeze(databyblock(:, 2, :));
-% curr_b = 6;
-% illusions = find(trialtypebyblock(:, curr_b) == 1);
-% controls = find(trialtypebyblock(:, curr_b) == 2);
-% catches = find(trialtypebyblock(:, curr_b) == 3);

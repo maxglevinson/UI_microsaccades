@@ -66,16 +66,12 @@ for win = 1:nwindows
             if ~isnan(ms_present(t)) && (incl_ms || ~(ms_present(t))) % if usable tp && no microsaccade currently ongoing (unless incl_ms=1)
                 curr_box_x = xPos(t) >= boxsides(1, :) & xPos(t) < boxsides(2, :);
                 curr_box_y = yPos(t) >= boxsides(1, :) & yPos(t) < boxsides(2, :);
-                %boxes = [boxes, boxgrid(curr_box_x, curr_box_y)]; % current box number
                 if sum(curr_box_x) && sum(curr_box_y) % eye position is within the full grid
                     boxes(i) = boxgrid(curr_box_x, curr_box_y); % current box number
                 end % otherwise just leave it at nan, if eye position is wild (outside the grid)
             end
         end
         Nb(win) = numel(~isnan(unique(boxes))); % how many unique boxes traversed.
-%         if nansum(ms_present(curr_window))
-%             Nb(win) = Nb(win) - 1; % if microsaccade(s) occurred in the window, subtract 1 box to accommodate the large retinal slip.
-%         end
     else
         Nb(win) = nan;
     end

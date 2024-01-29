@@ -1,4 +1,3 @@
-%function [microsaccade_details, bi_microsaccade_details, xyVelocity] = microsaccades_martinez_conde_2006(data)
 function [Trials] = UI_extractMicrosaccades(Trials, eta)
 % custom microsaccade extraction from eyelink data
 % Max Levinson, 2023
@@ -9,7 +8,7 @@ if ~isfield(Trials, 'KeyEvents')
 end
 
 if nargin < 2 % eta not specified
-    eta = 5; % velocity threshold multiplier
+    eta = 5; % default velocity threshold multiplier
 end
 
 for iTrial = 1:length(Trials)
@@ -50,9 +49,7 @@ full_time = Trials(iTrial).Samples.time; % tracker time
             end
         end
         blink_indices = blink_indices(blink_indices > 0); % keep within trial
-        
 
-        
         xPosClean = xPos;
         yPosClean = yPos;
         xPosClean(:, blink_indices) = NaN;
@@ -68,10 +65,6 @@ full_time = Trials(iTrial).Samples.time; % tracker time
         xPos = xPos - nanmean(xPosClean, 2); % coordinates from center (0) (pixels)
         yPos = yPos - nanmean(yPosClean, 2);
         
-% % remove any positions > screen size
-% xPos(xPos > 2560/2) = NaN;
-% yPos(yPos > 1440/2) = NaN;
-%pupilSize = data(:, 4); % circumference?
 % calculate deg per pix from screen size (cm), distance, resolution
 % MNI eyelink room
 horzcm = 60.8;
@@ -82,8 +75,6 @@ degperpix = 1 / pixperdeg;
 xPos = xPos * degperpix; % convert to dva
 yPos = yPos * degperpix;
 
-% computing velocity
-
 % computing velocity (adapted from edfExtractMicrosaccades.m, in edfImport)
 xVelocity = nan(size(xPos));
 yVelocity = nan(size(yPos));
@@ -91,13 +82,6 @@ xyAngle = nan(size(xVelocity));
 
 window_length_ms = 31; % in ms, surrounding timepoint (should be odd number); 31 taken from Martinez-Conde 2006
 window_length_tps = window_length_ms / dt;
-
-% half_window_tps = floor(window_length_tps / 2);
-% CommonFactor= (window_length_tps+1)*(1/fps); % (n timepoints + 1) * dt (in seconds)
-% for iT = (half_window_tps + 1):(size(xVelocity, 2)-half_window_tps)
-%     xVelocity(:, iT)= sum(-xPos(:, iT-[1:half_window_tps]) + xPos(:, iT+[1:half_window_tps]), 2)./CommonFactor;
-%     yVelocity(:, iT)= sum(-yPos(:, iT-[1:half_window_tps]) + yPos(:, iT+[1:half_window_tps]), 2)./CommonFactor;
-% end
 
 dx = zeros(size(xPos));
 dy = zeros(size(yPos));
@@ -121,29 +105,6 @@ blink_indices = blink_indices(blink_indices < trial_end_idx); % keep within tria
 xVelocity(:, blink_indices) = NaN;
         yVelocity(:, blink_indices) = NaN;
         xyVelocity(:, blink_indices) = NaN;
-        
-%         % only keep timepoints within trial (trial start to trial end)
-%         % if analyzing a bad trial (restarted, e.g.) we might not have
-%         % these events, so this part is skipped.
-%         badtrial = 0;
-%         try trial_start = Trials(iTrial).KeyEvents.FIX_ONSET; % tracker time, ms
-%         catch badtrial = 1;
-%         end
-%         try trial_end = Trials(iTrial).KeyEvents.STIM_OFFSET; % tracker time, ms
-%         catch badtrial = 1;
-%         end
-%         if ~badtrial
-%         full_time = Trials(iTrial).Samples.time; % tracker time
-%         trial_start_idx = find(full_time == trial_start); trial_end_idx = find(full_time == trial_end);
-%         trial_time_idx = full_time >= trial_start & full_time <= trial_end; % extract full trial indices
-%         %xVelocity(:, ~trial_time_idx) = NaN;
-%         %yVelocity(:, ~trial_time_idx) = NaN;
-%         %xyVelocity(:, ~trial_time_idx) = NaN;
-%         xVelocity = xVelocity(:, trial_time_idx);
-%         yVelocity = yVelocity(:, trial_time_idx);
-%         xyVelocity = xyVelocity(:, trial_time_idx);
-%         end
-        
 
 % detect possible microsaccades
 part_of_microsaccade = ones(size(xyVelocity)); % true or false for each timepoint and eye
@@ -159,17 +120,14 @@ for iEye = 1:2
     
     % set velocity threshold - eye is considered 'stopped' when velocity is
     % too slow (calculation taken from Engbert & Kliegl 2003)
-    %eta = 5; % threshold multiplier (sort of arbitrary?)
-    % multiplier is applied to noise level (sigma below)
+    % multiplier eta is applied to noise level (sigma below)
     xsigma = sqrt(nanmedian(xVelocity .^ 2, 2) - (nanmedian(xVelocity, 2) .^ 2));
     ysigma = sqrt(nanmedian(yVelocity .^ 2, 2) - (nanmedian(yVelocity, 2) .^ 2));
     xthresh = eta * xsigma;
     ythresh = eta * ysigma;
     % which velocities are in threshold? AKA if output here is >1.
     velInThreshold(iEye, :) = hypot(xVelocity(iEye, :) ./ xthresh(iEye), yVelocity(iEye, :) ./ ythresh(iEye));
-    part_of_microsaccade(iEye, velInThreshold(iEye, :) < 1) = 0;
-    %part_of_microsaccade(iEye, xyVelocity(iEye, :) < 3) = 0; % eye is stopped when velocity is too slow
-    
+    part_of_microsaccade(iEye, velInThreshold(iEye, :) < 1) = 0;    
     
     microsaccade_start = [0, diff(part_of_microsaccade(iEye, :))];
     microsaccade_start(microsaccade_start < 1) = 0;
@@ -282,8 +240,6 @@ min_amplitude = 3/60; % 3 min of arc, 0.05 deg
 end
 
 
-
-
 %% check binocular correspondence
 % adapted from edfImport edfExtractMicrosaccades.m
 % we set the "left" eye to the eye with fewest microsaccades.
@@ -308,12 +264,10 @@ for iLS= 1:length(bi_microsaccade_details.Start)
         bi_microsaccade_details.Start(iLS)= min([bi_microsaccade_details.Start(iLS); microsaccade_details(2).Start(iOverlap)]);
         bi_microsaccade_details.End(iLS)= max([bi_microsaccade_details.End(iLS); microsaccade_details(2).End(iOverlap)]);
         bi_microsaccade_details.Duration(iLS) = bi_microsaccade_details.End(iLS) - bi_microsaccade_details.Start(iLS) + 1;
-        %bi_microsaccade_details.Merged(iLS)= max([bi_microsaccade_details.Merged(iLS) microsaccade_details(2).Merged(iOverlap)]);
         bi_microsaccade_details.vPeak(iLS)= mean([bi_microsaccade_details.vPeak(iLS); microsaccade_details(2).vPeak(iOverlap)]);
         bi_microsaccade_details.Amplitude(iLS)= mean([bi_microsaccade_details.Amplitude(iLS); microsaccade_details(2).Amplitude(iOverlap)]);
         bi_microsaccade_details.DeltaX(iLS)= mean([bi_microsaccade_details.DeltaX(iLS); microsaccade_details(2).DeltaX(iOverlap)]);
         bi_microsaccade_details.DeltaY(iLS)= mean([bi_microsaccade_details.DeltaY(iLS); microsaccade_details(2).DeltaY(iOverlap)]);
-        %bi_microsaccade_details.Phi(iLS)= atan2(bi_microsaccade_details.DeltaY(iLS), bi_microsaccade_details.DeltaX(iLS));
         angle_rad = atan(bi_microsaccade_details.DeltaY(iLS) / bi_microsaccade_details.DeltaX(iLS));
         angle_deg = angle_rad * 180 / pi;
         bi_microsaccade_details.Phi(iLS) = angle_deg; % pos = to the right, neg = to the left
@@ -325,17 +279,12 @@ end
 bi_microsaccade_details.Start(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.Duration(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.End(iBadLeftEyeSaccades)= [];
-%bi_microsaccade_details.Merged(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.peakXVelocity(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.peakYVelocity(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.vPeak(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.DeltaX(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.DeltaY(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.Amplitude(iBadLeftEyeSaccades)= [];
-% bi_microsaccade_details.msXStarts(iBadLeftEyeSaccades)= [];
-% bi_microsaccade_details.msYStarts(iBadLeftEyeSaccades)= [];
-% bi_microsaccade_details.msXEnds(iBadLeftEyeSaccades)= [];
-% bi_microsaccade_details.msYEnds(iBadLeftEyeSaccades)= [];
 bi_microsaccade_details.Phi(iBadLeftEyeSaccades)= [];
 
 
@@ -413,7 +362,6 @@ bi_microsaccade_details.Slip(bad_amplitude | bad_duration) = [];
 for iS = 1:numel(bi_microsaccade_details.Start)
     bi_microsaccade_details.StartTime(iS) = Trials(iTrial).Samples.time(bi_microsaccade_details.Start(iS) + trial_start_idx - 1);
     bi_microsaccade_details.EndTime(iS) = Trials(iTrial).Samples.time(bi_microsaccade_details.End(iS) + trial_start_idx - 1);
-    %bi_microsaccade_details.Duration(iS) = bi_microsaccade_details.EndTime(iS)-bi_microsaccade_details.StartTime(iS);
 end
 
 % set microsaccade direction
