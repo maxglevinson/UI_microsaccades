@@ -1,10 +1,4 @@
-if ~ismac & isunix % BIC rosaline workstation need to add PTB path every time...
-    addpath(genpath('/export03/data/mlevin/toolboxes/Psychtoolbox-3-PTB_Beta-2019-09-26_V3.0.16/Psychtoolbox'));
-end
-
-% SUBJECT NUMBERS: PILOTS START AT 101.
 %% GENERAL PROPERTIES
-
 clearvars
 close all
 clear all
@@ -14,8 +8,8 @@ params.isPractice = 0; % set to 1 for practice (run after isoluminant generation
 params.debug = 0; % debug mode?
 params.fixation = 1; % include fixation point?
 params.shrinkDisplay = 1; % make stimulus take up only 75% of screen?
-params.eyeLink = 1; % have to leave this on
-params.useCalibratedIsoluminance = 1; % online dkl conversion, or use isoluminant RGB values generated per subject?
+params.eyeLink = 1; % leave this on unless doing some sort of testing/debugging
+params.useCalibratedIsoluminance = 1; % use isoluminant RGB values generated per subject (1), or online dkl conversion (0)?
 params.dummymode = 0; % change to 1 if testing eyelink code without using actual tracker
 params.showCursor = 0; % show mouse cursor?
 if params.dummymode
@@ -24,13 +18,6 @@ end
 params.writeData = 1; % 1 for experiments, 0 for testing/practice
 params.button2use = 'space'; % which button does participant use? KbName code ('space' or '1!')
 Priority(1);
-
-% set extra params things to 0 to avoid bugs
-params.rapidTag = 0;
-params.eyeTracking = 0;
-params.useParallelPort = 0;
-params.useButtonBox = 0;
-params.useC48 = 0;
 
 % response and experimenter keys
 KbName('UnifyKeyNames');
@@ -43,26 +30,17 @@ params.stimtype = 'color';
 params.subj_id = input('Subject number: ', 's');
 params.session_id = input('Session number: ', 's');
 
-% data and scripts paths
-if ismac % max's macbook pro
-    params.scripts_dir='~/Documents/McGill/neurospeed/Uniformity_Illusion/';
-elseif isunix % rosaline BIC workstation
-    params.scripts_dir='/export03/data/mlevin/Uniformity_Illusion/';
-else % eyelink room or home pc
-    params.scripts_dir='C:\Users\tneuro3\Documents\MATLAB\Max\Uniformity_Illusion\';
-    %params.scripts_dir='C:\Users\max\Documents\neurospeed\Uniformity_Illusion\';
-end
+params.scripts_dir='C:\Users\tneuro3\Documents\MATLAB\Max\Uniformity_Illusion\';
 addpath(genpath(params.scripts_dir));
 
 % trial timing details
 params.fixationTime = 1; % fixation time before stimulus appears
 params.shiftstart_range = [4 6]; % range of possible starts of physical uniformity shift, in seconds
-%!!!!!!!! MAYBE Let's adjust this for each condition.
 params.physical_shift_period = 2; % how many seconds it takes to shift to physical uniformity
-params.noiseTime = 3; % how much time in seconds to show dynamic noise at the end of each trial
+%params.noiseTime = 3; % how much time in seconds to show dynamic noise at the end of each trial
 % ^^ not used, changed instead to half of trial length
 params.trial_length_max = 20; % maximum trial length w/o button press
-params.post_uniformity = 1;%2; % how much time to keep stimulus up after button press
+params.post_uniformity = 1; % how much time to keep stimulus up after button press
 
 % block details
 params.nBlocks = 3; % 3 per session
@@ -72,10 +50,14 @@ params.nControlShift_trials_per_block = 5;
 params.nControlSharp_trials_per_block = 5; % no soft transition bw center & periphery. should at least slightly increase RT
 % set block types. 1 = smallest luminance difference, 3 largest luminance difference
 % show all periphery values for each center size value
-params.blockOrder = [1 2 3]; % for periphery shade/color; randomize offline and set here manually
-params.blockSizeOrder = [6 4 2]; %randomize offline and set here manually
+params.blockOrder = [1 2 3]; % for periphery color; randomize offline and set here manually
+params.blockSizeOrder = [6 4 2]; % randomize offline and set here manually
+% (run randomize_blocks.m once per subject to generate list of random block
+% orders)
 
 % set demo example parameters
+% shift trials so I can show the stimulus for a while and then it
+% demonstrates what the experience should be like.
 if params.isDemo
     params.eyeLink = 0;
     params.writeData = 0;
@@ -113,13 +95,8 @@ end
 
 % set stimulus parameters
 switch params.stimtype
-    case 'shade'
-        params.baseColor = [0; 0.16; 1]; % blue; needs to be a 3x1 column vector
-        params.modulated_channels = 1:3; % which rgb channels to change? 3 = only blue.
-        params.shadeCenter = 0.3725; % luminance 1
-        params.shadePeriphery = [0.4039, 0.4275, 0.4510];%, 0.4706]; % luminance 1.2, 1.35, 1.5, [1.65]
-    case 'color'
-        load('phosphors.mat'); % monitor RGB phosphors
+      case 'color'
+        load('phosphors.mat'); % monitor RGB phosphors (template, not calibrated)
         params.phosphors = phosphors;
         load('fundamentals_ss.mat'); % cone fundamentals, Stockman & Sharpe
         params.cone_fundamentals = fundamentals;
@@ -182,7 +159,7 @@ if params.eyeLink
     Eyelink('command', 'file_sample_data = LEFT,RIGHT,GAZE,HREF,RAW,AREA,GAZERES,BUTTON,STATUS,INPUT');
     Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
     
-    Eyelink('command', 'enable_automatic_calibration = YES');%NO');
+    Eyelink('command', 'enable_automatic_calibration = YES');
     Eyelink('command', 'calibration_type = HV9'); % or HV5/9/13
     % shrinked calibration window for sub 210 session 4 (last 2 blocks of session 2)
     % and all following subjects used shrinked area, plus HV9 instead of HV5.
@@ -192,17 +169,6 @@ if params.eyeLink
     % open file to record data to
     edfFile=['sub', params.subj_id, 's', params.session_id, '.edf'];
     Eyelink('Openfile', edfFile);
-    
-    % Calibrate the eye tracker
-    %EyelinkDoTrackerSetup(el); % instead calibrate prior to each block
-    
-    %     % do a final check of calibration using driftcorrection
-    %     if params.dummymode == 0
-    %         EyelinkDoDriftCorrection(el);
-    %     end
-    
-    %WaitSecs(0.1);
-    %Eyelink('StartRecording');
     
     params.eye_used = Eyelink('EyeAvailable'); % get eye that's tracked
     %     if params.eye_used == el.BINOCULAR % if both eyes are tracked
@@ -225,17 +191,17 @@ all_trials=params.nBlocks*params.nTrials_per_block;
 data = NaN(all_trials,11);
 % C1 = subject number
 % C2 = trial type (1=illusion, 2=control shift, 3=no soft border, -1=always uniform)
-% C3 = block number
-% C4 = block type (1, 2, 3, or -1)
+% C3 = block number in the session (1-3)
+% C4 = block color contrast level (1, 2, 3 = low, medium, high)
 % C5 = trial number within block
 % C6 = Y/N did subject press the button (uniformity perceived)
-% C7 = reaction time
-% C8=median distance to the fixation point (in dva)
+% C7 = reaction time from stimulus onset
+% C8=median gaze distance to the fixation point (in dva)
 % C9=mean distance to the fixation point (in dva)
 % C10=max distance to the fixation point (in dva)
 % C11=center radius (dva)
-% C12=center stimulus value
-% C13=periphery stimulus value
+% C12=center stimulus color (deg)
+% C13=periphery stimulus color (deg)
 
 timing = NaN(all_trials, 8);
 % C1 = trial start (fixation)
@@ -250,7 +216,6 @@ timing = NaN(all_trials, 8);
 % fill in general characteristics
 data(:, 1) = str2num(params.subj_id); % subject number
 timing(:, 8) = params.trial_length_max;
-
 
 % Set Experimental Blocks parameters
 trialtypes = [ones(params.nIllusion_trials_per_block, 1); 2 * ones(params.nControlShift_trials_per_block, 1); 3 * ones(params.nControlSharp_trials_per_block, 1)];
@@ -270,21 +235,12 @@ for block=1:params.nBlocks
     data(blocktrials,5)=[1:params.nTrials_per_block]';
     
     % STIMULUS CHARACTERISTICS
-    switch params.stimtype
-        case 'shade'
-            data(blocktrials, 12) = params.shadeCenter;
-            data(blocktrials, 13) = params.shadePeriphery(params.blockOrder(block));
-        case 'color'
             data(blocktrials, 12) = params.colorCenter;
             data(blocktrials, 13) = params.colorPeriphery(params.blockOrder(block));
-    end
-    %data(blocktrials(controlcatchblocktrials), 13) = data(blocktrials(controlcatchblocktrials), 12);
     
-    if params.blockOrder(block) ~= -1 % control but random stim params
         % get random start of physical shift, between range given in params.shiftstart_range
         shiftstart_range_frames = (floor(params.shiftstart_range(1) ./ params.IFI):floor(params.shiftstart_range(2) ./ params.IFI));
         timing(blocktrials(controlshiftblocktrials), 4) = datasample(shiftstart_range_frames, sum(controlshiftblocktrials));
-    end
     
     % set center size for this block
     data(blocktrials, 11) = params.blockSizeOrder(block);
@@ -292,12 +248,7 @@ end
 
 %% INITIALIZE STIMULUS
 stimulus = struct;
-switch params.stimtype
-    case 'shade'
-        [stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_shade_init(params);
-    case 'color'
-        [stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_color_init(params);
-end
+[stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_color_init(params);
 
 %% DISPLAY INSTRUCTIONS
 exitNow = 0;
@@ -305,8 +256,6 @@ exitNow = 0;
 if params.eyeLink
     EyelinkDoTrackerSetup(el); % can calibrate now before the block starts
     WaitSecs(0.1);
-    %     Eyelink('SetOfflineMode'); % first set offline mode before starting
-    %     Eyelink('StartRecording');
 end
 
 start = 0;
@@ -318,12 +267,7 @@ while start == 0
     else
         Screen('FillRect', winMain, params.colBackground);
     end
-    switch params.stimtype
-        case 'shade'
-            UI_drawInstructions('maintask_instructions_shade', winMain, params);
-        case 'color'
-            UI_drawInstructions('maintask_instructions_color', winMain, params);
-    end
+    UI_drawInstructions('maintask_instructions_color', winMain, params);
     Screen('Flip', winMain);
     if keyDown
         if keyCode(params.keys.escape)
@@ -340,12 +284,7 @@ if params.shrinkDisplay
 else
     Screen('FillRect', winMain, params.colBackground);
 end
-switch params.stimtype
-    case 'shade'
-        UI_drawInstructions('maintask_instructions_shade', winMain, params);
-    case 'color'
-        UI_drawInstructions('maintask_instructions_color', winMain, params);
-end
+UI_drawInstructions('maintask_instructions_color', winMain, params);
 Screen('Flip', winMain);
 WaitSecs(.2);
 
@@ -357,7 +296,7 @@ for block = 1:params.nBlocks
     % To stop and restart the experiment if needed
     [keyDown, keyTime, keyCode] = KbCheck(-1);
     if keyDown
-        if keyCode(params.keys.qkey) % find(find(keyCode)) == qkey
+        if keyCode(params.keys.qkey)
             disp('Experiment on pause. Press any key to continue!');
             pause;
         elseif keyCode(params.keys.escape)
@@ -373,12 +312,7 @@ for block = 1:params.nBlocks
     % because changing center size every block, re-init stimulus
     params.centerdva = params.blockSizeOrder(block);
     params = UI_generate_center_rects(params);
-    switch params.stimtype
-        case 'shade'
-            [stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_shade_init(params);
-        case 'color'
             [stimulus.fillRects, stimulus.frameRects, stimulus.thickness] = UI_color_init(params);
-    end
     
     if params.eyeLink && block > 1 % don't re-calibrate for first block
         disp('ready to calibrate'); % let experimenter know they are ready
@@ -451,7 +385,7 @@ for block = 1:params.nBlocks
             end
             % eye tracking
             if params.eyeLink
-                Eyelink('Message', 'TRIALID %d', trial); % in case we want to do the Eyelink Dataviewer trial integration
+                Eyelink('Message', 'TRIALID %d', trial); % in case we want to use the Eyelink Dataviewer trial integration
                 Eyelink('SetOfflineMode'); % first set offline mode before starting
                 Eyelink('StartRecording');
                 WaitSecs(0.1); % let it accumulate some samples first
