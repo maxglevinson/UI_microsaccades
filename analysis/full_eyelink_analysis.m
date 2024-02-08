@@ -458,7 +458,7 @@ size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
 color_indices = [1 1 1 2 2 2 3 3 3]; % 1=low contrast, 2=medium, 3=high contrast
 all_indices = [1 1 1 1 1 1 1 1 1];
 
-which2use = 'all'; % size or color or all (average across all blocks) or separate (plot each condition)
+which2use = 'separate'; % size or color or all (average across all blocks) or separate (plot each condition)
 which2plot = 'rate'; % probability, rate, amplitude, pupil, velocity, retinal slip
 subjects2use = 1:nsubjects; % normally all 
 overlay = 1; % overlay the plots on one axis or use subplots
@@ -561,7 +561,7 @@ for i = 1:9
             ylbl = 'retinal slip (deg / 50ms)';
             
     end
-    set(bp, 'LineWidth', 4);
+    set(bp, 'LineWidth', 1);%4);
     
     H = gca;
     H.LineWidth = 2;
@@ -575,7 +575,11 @@ for i = 1:9
     if numel(subjects2use) > 1
         switch which2plot
             case 'rate'
-                set(gca, 'ylim', [0.3 1.3])
+                if strcmp(which2use, 'separate')
+                    set(gca, 'ylim', [0 1.8]);
+                else
+                set(gca, 'ylim', [0.3 1.3]);
+                end
                 baseline_line = nanmean(nanmean(norm_baseline_ms_counts));
             case 'amplitude'
                 baseline_line = nanmean(nanmean(baseline_amplitudes));
@@ -595,9 +599,11 @@ for i = 1:9
                 baseline_line = nanmean(baseline_ms_counts(subj, :));
         end
     end
+    if ~strcmp(which2use, 'separate')
     hold on; horzline = plot(curr_xlim, [baseline_line baseline_line], '--k');
-    
     set(get(get(horzline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    end
+    
     
     
     % add y/x axis labels
@@ -642,12 +648,14 @@ switch which2use
         set(sl, 'FontSize', 26);
     case 'separate'
         if overlay
-            legend({'small low', 'medium low', 'large low', 'small medium', 'medium medium', 'large medium', 'small high', 'medium high', 'large high'});
+            lgnd = legend({'small low', 'medium low', 'large low', 'small medium', 'medium medium', 'large medium', 'small high', 'medium high', 'large high'});
             sl = title([which2plot ' by condition']);
         else
             sly = suplabel('color contrast', 'y');
             slx = suplabel('center size', 'x');
         end
+    hold on; horzline = plot(curr_xlim, [baseline_line baseline_line], '--k');
+    set(get(get(horzline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
 end
 set(gca, 'FontSize', 26);
 
@@ -671,19 +679,29 @@ end
 ylabel(ylbl);
 legend boxoff
 
-% plotting parameters for Figure 2b
+% plotting parameters for manuscript figures
 ylbl = ylabel('Normalized Microsaccade Rate (Hz)');
 xlbl = xlabel('Time (ms)');
 ttl = title('Microsaccades Time-Locked to Fading Reports', 'FontWeight', 'Normal');
-set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
 set(gca, 'FontSize', 9, 'LineWidth', 1);
 set(bp, 'LineWidth', 1);
 set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
 delete(horzline)
-legend off
 
+switch which2use
+    case 'all' % Figure 2b
+        legend off
+set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
 savefig(f, 'fig2b.fig');
 exportgraphics(f, 'fig2b.pdf', 'ContentType', 'vector', 'Resolution', 600);
+    case 'separate' % Supplementary Figure 2
+        set(gcf, 'Units', 'Inches', 'Position', [0, 0, 6, 3]);
+        legend('Location', 'Southwest', 'NumColumns', 3, 'FontSize', 9);
+        default_legendlinelength = lgnd.ItemTokenSize;
+        lgnd.ItemTokenSize = default_legendlinelength / 2;
+        savefig(f, 'figs2.fig');
+        exportgraphics(f, 'figs2.pdf', 'ContentType', 'vector', 'Resolution', 600);
+end
 
 %% microsaccade characteristics
 % plot xy amplitude vs peak xy velocity
