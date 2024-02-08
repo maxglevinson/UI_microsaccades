@@ -12,6 +12,7 @@ library(ggeffects)
 
 ## ---- load individual trials ---- ##
 setwd("/export04/data/mlevin/UI_microsaccades/bhv_data")
+setwd("~/Documents/McGill/OneDrive - McGill University/neurospeed/UI_microsaccades/bhv_data")
 df <- read.csv('./trial_data_withblinks.csv',sep = ",",stringsAsFactors = FALSE)
 df$FT = df$RT
 df$baselinemsrate = df$baselinenms / df$FT
@@ -61,7 +62,7 @@ l0 = 36.54 * A
 dfsharp$scaled_eccentricity = (log(dfsharp$eccentricity) - l0) / A
 dfsharp$scaled_eccentricity = 1 / (A * dfsharp$eccentricity)
 
-dfall = bind_rows(list("main" = dforig, "replay" = dfreplay, "sharp" = dfsharp), .id = "trialtype")
+dfall = bind_rows(list("Main" = dforig, "Replay" = dfreplay, "Sharp" = dfsharp), .id = "trialtype")
 
 
 
@@ -76,11 +77,6 @@ dfplot <- curr_df %>%
   group_by(subject, contrast, eccentricity) %>%
   get_summary_stats(FT, type = "mean")
 
-# get subject mean FT, averaged across all stim conditions
-dfplot %>%
-  group_by(subject) %>%
-  get_summary_stats(mean, type = "mean")
-
 # normalize by subject mean, where pop. mean = still pop. mean
 pop_mean = mean(na.omit(curr_df$FT))
 for (s in unique(dfplot$subject)) {
@@ -92,39 +88,55 @@ for (s in unique(dfplot$subject)) {
 bxp <- ggboxplot(
   dfplot, x = "contrast", y = "mean",
   color = "eccentricity", palette = "rgb",
-  add = c("jitter"), add.params = list(alpha=.5)
+  add = c("jitter"), add.params = list(alpha=.5),
 )
-bxp = bxp + ylab('norm FT (s)') + xlab('color contrast (deg)') + theme(text = element_text(size = 20, family="Helvetica"))
-#bxp = bxp + scale_x_discrete(labels = c("6", "4", "2")) + scale_colour_discrete(labels=c("10", "20", "30")) # for eccentricity
-bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="eccentricity (deg)", labels=c("6", "4", "2")) # for contrast
-ggpar(bxp, ylim = c(0, 15))
+bxp = bxp + ylab('Normalized Fading Time (s)') + xlab('Color Contrast (deg)') + ggtitle('Fading Times by Boundary Strength')
+bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="Eccentricity (deg)", labels=c("6", "4", "2"), guide = guide_legend(nrow=1)) # for contrast
+bxp = bxp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10),
+                  legend.text = element_text(size = 9), legend.title = element_text(size = 9), plot.title = element_text(size = 12, hjust=0.5))
+bxp = bxp + theme(legend.justification=c(0,1), legend.position=c(0.01,1), legend.background = element_rect(fill = NA))
+bxp = ggpar(bxp, ylim = c(0, 15))
+#bxp = ggpar(bxp, ylim = c(0, 20)) + ggtitle('Replay Trials') # uncomment to change title to 'replay', or 'sharp'
+bxp
+ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "fig1c.pdf")
+#ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "figs1a.pdf")
+#ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "figs1b.pdf")
+
 
 
 ## Figure 1d: density plots by trialtype
-bxp <- ggplot(dfall, aes(x=FT, linetype=trialtype)) + stat_density(geom="line", linewidth=1, position="identity") + theme_classic() + xlab('FT (s)') +
-  theme(text = element_text(size = 20, family = "Helvetica"), axis.text.x = element_text(size = 20, colour="black"), axis.text.y = element_text(size = 20, colour="black")) + 
-  scale_linetype_manual(name="trial type", values=c("solid", "dashed", "dotted")) + guides(linetype = guide_legend(override.aes = list(linewidth = 0.5)))
-ggpar(bxp, xlim = c(0, 20))
+dp <- ggplot(dfall, aes(x=FT, linetype=trialtype)) + stat_density(geom="line", linewidth=1, position="identity") + theme_classic() + 
+  xlab('Fading Time (s)') + ylab('Density') + ggtitle('Fading Time Distributions') +
+  scale_linetype_manual(name="Trial Type", values=c("solid", "dashed", "dotted")) + guides(linetype = guide_legend(override.aes = list(linewidth = 0.5)))
+dp = dp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10), plot.title = element_text(size = 12, hjust=0.5),
+                  legend.text = element_text(size = 9), legend.title = element_text(size = 9), axis.text = element_text(size = 9, colour="black"))
+dp = dp + theme(legend.justification=c(1,1), legend.position=c(1,1))
+dp
+ggsave(plot = dp, width = 4, height = 3, dpi = 600, filename = "fig1d.pdf")
+
 
 
 ## Figure 2 c-d: boxplot of FTs by C or E, in trials with / without microsaccades
-combined = bind_rows(list("no ms" = dforignomsnoblinks, ">1 ms" = dforigwithmsnoblinks), .id = "source")
+combined = bind_rows(list("0 m.s." = dforignomsnoblinks, ">1 m.s." = dforigwithmsnoblinks), .id = "source")
 dfplot <- combined %>%
   convert_as_factor(subject, contrast, eccentricity) %>%
   reorder_levels("eccentricity", order=c("6", "4", "2")) %>%
-  group_by(eccentricity, subject, source) %>%
+  group_by(eccentricity, subject, source) %>% # set to contrast (2c) or eccentricity (2d)
   get_summary_stats(FT, type = "mean_sd")
 
 bxp <- ggboxplot(
-  dfplot, x = "eccentricity", y = "mean", # set to eccentricity or contrast
+  dfplot, x = "eccentricity", y = "mean", # set to contrast (2c) or eccentricity (2d)
   color = "source",
   add = c("jitter"), add.params = list(alpha=.5)
 )
-bxp = bxp + ylab('FT (s)') + theme(text = element_text(size = 20))
-#bxp = bxp + scale_x_discrete(name = "contrast (deg)", labels = c("10", "20", "30")) + scale_colour_discrete(name = "subset") # for eccentricity
-bxp = bxp + scale_x_discrete(name="eccentricity (deg)", labels = c("6", "4", "2")) + scale_colour_discrete(name = "subset") # for contrast
-ggpar(bxp, ylim = c(0, 15))
-
+bxp = bxp + ylab('Fading Time (s)') + theme(text = element_text(size = 20))
+#bxp = bxp + scale_x_discrete(name = "Color Contrast (deg)", labels = c("10", "20", "30")) + scale_colour_discrete(name = "Subset") # for contrast (Fig. 2c)
+bxp = bxp + scale_x_discrete(name="Eccentricity (deg)", labels = c("6", "4", "2")) + scale_colour_discrete(name = "Subset") # for eccentricity (Fig. 2d)
+bxp = bxp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10), legend.text = element_text(size = 9), legend.title = element_text(size = 9),
+                  axis.text = element_text(size = 9, colour="black"))
+bxp = bxp + theme(legend.justification=c(0,1), legend.position=c(0.01,1), legend.direction="horizontal",legend.background = element_rect(fill = NA))
+bxp = ggpar(bxp, ylim = c(0, 15))
+ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "fig2d.pdf")
 
 
 
@@ -136,11 +148,6 @@ dfplot <- curr_df %>%
   reorder_levels("eccentricity", order=c("6", "4", "2")) %>%
   group_by(subject, contrast, eccentricity) %>%
   get_summary_stats(baselinemsrate, type = "mean")
-
-# get subject mean msrate, averaged across all stim conditions
-dfplot %>%
-  group_by(subject) %>%
-  get_summary_stats(mean, type = "mean")
 
 # normalize by subject mean, where pop. mean = pop. mean
 pop_mean = mean(na.omit(curr_df$baselinemsrate))
@@ -155,10 +162,15 @@ bxp <- ggboxplot(
   color = "eccentricity", palette = "rgb",
   add = c("jitter"), add.params = list(alpha=.5)
 )
-bxp = bxp + ylab('norm microsaccade rate (Hz)') + xlab('color contrast (deg)') + theme(text = element_text(size = 20, family="Helvetica"))
-#bxp = bxp + scale_x_discrete(labels = c("6", "4", "2")) + scale_colour_discrete(labels=c("10", "20", "30")) # for eccentricity
-bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="eccentricity (deg)", labels=c("6", "4", "2")) # for contrast
-ggpar(bxp, ylim = c(0, 2))
+bxp = bxp + ylab('Normalized Microsaccade Rate (Hz)') + xlab('Color Contrast (deg)') + ggtitle('Microsaccade Rate by Boundary Strength')
+bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="Eccentricity (deg)", labels=c("6", "4", "2"), guide = guide_legend(nrow=1)) # for contrast
+bxp = bxp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10),
+                  legend.text = element_text(size = 9), legend.title = element_text(size = 9), plot.title = element_text(size = 12, hjust=0.5))
+bxp = bxp + theme(legend.justification=c(1,1), legend.position=c(1,1), legend.background = element_rect(fill = NA))
+bxp = ggpar(bxp, ylim = c(0, 2.2))
+ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "fig3a.pdf")
+
+
 
 
 ## Figure 3b: mean immobilization duration for every stimulus condition, 1 dot per subject
@@ -169,11 +181,6 @@ dfplot <- curr_df %>%
   reorder_levels("eccentricity", order=c("6", "4", "2")) %>%
   group_by(subject, contrast, eccentricity) %>%
   get_summary_stats(immobduration, type = "mean")
-
-# get subject mean, averaged across all stim conditions
-dfplot %>%
-  group_by(subject) %>%
-  get_summary_stats(mean, type = "mean")
 
 # normalize by subject mean, where pop. mean = pop. mean
 pop_mean = mean(na.omit(curr_df$immobduration))
@@ -189,10 +196,14 @@ bxp <- ggboxplot(
   #  title = plottitle,
   add = c("jitter"), add.params = list(alpha=.5)
 )
-bxp = bxp + ylab('norm immobilization (s)') + xlab('color contrast (deg)') + theme(text = element_text(size = 20, family="Helvetica"))
-#bxp = bxp + scale_x_discrete(labels = c("6", "4", "2")) + scale_colour_discrete(labels=c("10", "20", "30")) # for eccentricity
-bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="eccentricity (deg)", labels=c("6", "4", "2")) # for contrast
-ggpar(bxp, ylim = c(0, 4))
+bxp = bxp + ylab('Normalized Immobilization Time (s)') + xlab('Color Contrast (deg)') + ggtitle('Immobilization Time by Boundary Strength')
+bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="Eccentricity (deg)", labels=c("6", "4", "2"), guide = guide_legend(nrow=1)) # for contrast
+bxp = bxp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10),
+                  legend.text = element_text(size = 9), legend.title = element_text(size = 9), plot.title = element_text(size = 12, hjust=0.5))
+bxp = bxp + theme(legend.justification=c(0,1), legend.position=c(0.01,1), legend.background = element_rect(fill = NA))
+bxp = ggpar(bxp, ylim = c(0, 4.2))
+ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "fig3b.pdf")
+
 
 
 ###### Summary data. Load all trials, without excluding by eye movement criteria
