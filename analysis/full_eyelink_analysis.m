@@ -140,9 +140,34 @@ end
 %     'degperpix', 'fps', 'extra', 'nblocks', 'blockorder', '-v7.3');
 
 %% just load the saved data
-datadir = '/export04/data/mlevin/UI_eyelink';
+%datadir = '/export04/data/mlevin/UI_eyelink';
+datadir = '~/Documents/McGill/OneDrive - McGill University/neurospeed/UI_eyelink';
 addpath(genpath(datadir));
-load('current_data_withblinks.mat');
+load('current_data.mat');
+
+% set order to: sizes  2 4 6 2 4 6 2 4 6
+%               colors 1 1 1 2 2 2 3 3 3
+blockorder = [4 8 2 3 1 9 5 7 6; ... % subj 201
+    9 1 4 6 8 5 3 7 2; ... % subj 202
+    2 5 8 9 4 7 6 1 3; ... % subj 203
+    6 8 3 7 5 4 2 1 9; ... % subj 204
+    8 7 1 2 4 3 9 5 6; ... % subj 205
+    6 8 3 7 5 4 2 1 9; ... %subj 206
+    6 8 3 7 5 4 2 1 9; ... % subj 208
+    7 6 8 3 1 9 2 5 4; ... % subj 209
+    6 8 2 7 5 4 1 3 9; ... % subj 210
+    8 6 3 5 7 4 1 2 9; ... % subj 211
+    7 8 1 4 2 3 5 9 6; ... % subj 212
+    1 6 3 7 9 5 8 2 4; ... % subj 213
+    8 6 2 1 7 3 5 4 9; ... % subj 214
+    1 6 7 5 3 8 4 9 2; ... % subj 215
+    8 4 7 9 3 6 2 5 1; ... % subj 216
+    1 3 6 2 5 9 7 4 8; ... % subj 217
+    2 8 3 9 4 7 1 6 5; ... % subj 218
+    7 1 3 2 9 5 8 4 6; ... % subj 219
+    6 3 1 9 4 8 7 2 5; ... % subj 222
+    4 1 5 6 7 9 8 2 3; ... % subj 223
+    9 1 7 4 2 8 6 5 3]; % subj 224
 
 %% epoch trials into block averages
 
@@ -195,7 +220,7 @@ for block = 1:nblocks
         if nblocktrials > 0 % if not missing whole block
             for trial = 1:nblocktrials
                 rt = diff(trial_indices_all{subj}{block}(trial, 2:3));
-                if rt > 0 && rt < 20000 % only analyze trials with certain RT?
+                if rt > 0%&& rt < 20000 % only analyze trials with certain RT?
                     stim_on = trial_indices_all{subj}{block}(trial, 2);
                     stim_off = trial_indices_all{subj}{block}(trial, 4);
                     button_press = trial_indices_all{subj}{block}(trial, 3);
@@ -346,14 +371,14 @@ for block = 1:nblocks
                     trial_xPos = (trial_xPos - nanmean(trial_xPos)) * degperpix;
                     trial_yPos = [nan(1, nan_pad_start), nanmean(curr_posdata(4:5, first_idx:last_idx), 1), nan(1, nan_pad_end)];
                     trial_yPos = (trial_yPos - nanmean(trial_yPos)) * degperpix;
-                                             block_Nb(:, trial) = retinal_slip(trial_xPos, trial_yPos, block_ms_present(:, trial), 0); % last arg 1: include microsaccades
+         %                                    block_Nb(:, trial) = retinal_slip(trial_xPos, trial_yPos, block_ms_present(:, trial), 0); % last arg 1: include microsaccades
                     fulltrial_xPos = nanmean(curr_posdata(2:3, :), 1); fulltrial_yPos = nanmean(curr_posdata(4:5, :), 1);
                     fulltrial_xPos = (fulltrial_xPos - nanmean(fulltrial_xPos)) * degperpix; fulltrial_yPos = (fulltrial_yPos - nanmean(fulltrial_yPos)) * degperpix;
-                    fulltrial_block_Nb = retinal_slip(fulltrial_xPos, fulltrial_yPos, ms_present_all{subj}{block}{trial}', 0);
-                    baseline_retinal_slip_trials = [baseline_retinal_slip_trials; nanmean(fulltrial_block_Nb(floor(stim_on/50):floor((button_press-300)/50)))];
-                    if isnan(baseline_retinal_slip_trials(end))
-                        error('tt')
-                    end
+         %          fulltrial_block_Nb = retinal_slip(fulltrial_xPos, fulltrial_yPos, ms_present_all{subj}{block}{trial}', 0);
+         %           baseline_retinal_slip_trials = [baseline_retinal_slip_trials; nanmean(fulltrial_block_Nb(floor(stim_on/50):floor((button_press-300)/50)))];
+         %           if isnan(baseline_retinal_slip_trials(end))
+         %               error('tt')
+         %           end
                     
                     % baseline_correct pupil trace per trial?
                         T = block_pupil_trace(:, trial);
@@ -380,7 +405,7 @@ for block = 1:nblocks
             %[~, ms_counts_all(:, subj, block)] = cross_trial_ms_rate(block_ms_present, 'alpha'); % investigate shuffled ms instead.
             mean_amplitudes_all(:, subj, block) = nanmean(block_ms_amplitudes, 2);
             mean_xyVelocity_all(:, subj, block) = nanmean(block_xyVelocity, 2);
-            baseline_probability(subj, block) = nanmean(block_ms_present(1:2000, :), 2);
+            baseline_probability(subj, block) = nanmean(nanmean(block_ms_present(1:2000, :), 2));
             baseline_ms_counts(subj, block) = nanmean(ms_counts_all(1:2000, subj, block)); % first 2000 of epoch = baseline.
             baseline_blink_rate(subj, block) = nanmedian(blink_rate_all(1:2000, subj, block));
             mean_pupil_all(:, subj, block) = nanmean(block_pupil_trace, 2);
@@ -424,7 +449,7 @@ end
 
 all_ntrials_used = nansum(nansum(ntrials_used, 3), 2);
 
-%% plot averaged by size or contrast\
+%% plot averaged by size or contrast
 
 window_length = 200;
 rate_window_length = 1; % for sliding window ms/sec calculation
@@ -433,14 +458,14 @@ size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
 color_indices = [1 1 1 2 2 2 3 3 3]; % 1=low contrast, 2=medium, 3=high contrast
 all_indices = [1 1 1 1 1 1 1 1 1];
 
-which2use = 'separate'; % size or color or all (average across all blocks) or separate (plot each condition)
+which2use = 'all'; % size or color or all (average across all blocks) or separate (plot each condition)
 which2plot = 'rate'; % probability, rate, amplitude, pupil, velocity, retinal slip
 subjects2use = 1:nsubjects; % normally all 
 overlay = 1; % overlay the plots on one axis or use subplots
 plotcolors = {[1 0 0], [0 1 0], [0 0 1]};
 nobounds = 0; % just plot line, no stderr bounds?
 
-figure; hold on;
+f = figure; hold on;
 %for subj = 1:nsubjects % plot each subject separately?
 %    subjects2use = subj;
 %figure; hold on;
@@ -483,7 +508,7 @@ for i = 1:9
             if nobounds
                 bp = plot(count_timepoints(1:end-250), mean_ms_counts(1:end-250), 'Color', plotcolors{i});
             else
-                bp = boundedline(count_timepoints(1:end-250), mean_ms_counts(1:end-250), stderr_ms_counts(1:end-250), 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
+                bp = boundedline(count_timepoints(250:end-250), mean_ms_counts(250:end-250), stderr_ms_counts(250:end-250), 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
             end
             ylbl = 'microsaccade rate (Hz)';
             
@@ -586,11 +611,7 @@ for i = 1:9
             xlabel('time (s)');
         end
     else
-        if ~baseline_correct
             ylabel([which2plot]);
-        elseif baseline_correct
-            ylabel([which2plot, ' change from baseline']);
-        end
         xlabel('time (s)');
         if strcmp(which2use, 'all')
             set(bp, 'Color', [0 0 0]);
@@ -650,8 +671,19 @@ end
 ylabel(ylbl);
 legend boxoff
 
-set(gcf, 'WindowState', 'maximized')
-set(gcf, 'Position', [440 314 563 433]);
+% plotting parameters for Figure 2b
+ylbl = ylabel('Normalized Microsaccade Rate (Hz)');
+xlbl = xlabel('Time (ms)');
+ttl = title('Microsaccades Time-Locked to Fading Reports', 'FontWeight', 'Normal');
+set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
+set(gca, 'FontSize', 9, 'LineWidth', 1);
+set(bp, 'LineWidth', 1);
+set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
+delete(horzline)
+legend off
+
+savefig(f, 'fig2b.fig');
+exportgraphics(f, 'fig2b.pdf', 'ContentType', 'vector', 'Resolution', 600);
 
 %% microsaccade characteristics
 % plot xy amplitude vs peak xy velocity
@@ -677,16 +709,20 @@ all_xy_amplitudes_sort = all_xy_amplitudes(all_xy_amplitudes < 2 & all_xy_peakve
 all_xy_peakvelocities_sort = all_xy_peakvelocities(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
 all_subjnums_sort = all_subjnums(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
 all_durations_sort = all_durations(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
-figure; hold on;
-scatter(all_xy_amplitudes_sort(all_durations_sort > 0), all_xy_peakvelocities_sort(all_durations_sort > 0), '.k', 'MarkerFaceAlpha', .05, 'MarkerEdgeAlpha', .05);
+f = figure; hold on;
+scatter(all_xy_amplitudes_sort(all_durations_sort > 0), all_xy_peakvelocities_sort(all_durations_sort > 0), 2, 'filled', 'k', 'MarkerFaceAlpha', 0.05);
 
+% plotting parameters for Figure 2a
 set(gca, 'xscale', 'log'); set(gca, 'yscale', 'log');
-set(gca, 'FontSize', 26);
-   H = gca;
-    H.LineWidth = 2;
+set(gca, 'FontSize', 9, 'LineWidth', 1);
 set(gca, 'FontName', 'Helvetica')
-xlabel('amplitude (dva)', 'FontName', 'Helvetica'); ylabel('velocity (dva/s)', 'FontName', 'Helvetica');
+xlbl = xlabel('Amplitude (dva)'); ylbl = ylabel('Velocity (dva/s)');
+ttl = title('Microsaccade Main Sequence', 'FontWeight', 'Normal');
+set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
+set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
 
+savefig(f, 'fig2a.fig');
+exportgraphics(f, 'fig2a.pdf', 'ContentType', 'vector', 'Resolution', 600);
 %% plot each trial gaze timecourses for quality control
 subj = 21;
 startidx = 2; % which of trial_indices should we use
