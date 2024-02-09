@@ -4,7 +4,7 @@
 nonan_idx = ~isnan(rts);
 snums = subjs(nonan_idx);
 rt_nonan = rts(nonan_idx) ./ 1000;
-try % if we computed retinal slip (sometimes not because it takes a long time)
+try % if we computed retinal slip (sometimes we don't because it takes a long time)
 baseline_slip_nonan = baseline_retinal_slip_trials(nonan_idx);
 catch
     baseline_retinal_slip_trials = nan(size(min_slip_window));
