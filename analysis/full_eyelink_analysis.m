@@ -98,8 +98,7 @@ for subj = 1:nsubjects
 end
 ntrialstotal_byblock = sum(ntrials_all);
 
-% convert position data to degrees of visual angle? actually will need
-% to zero mean first
+% convert position data to degrees of visual angle?
 % calculate deg per pix from screen size (cm), distance, resolution
 horzcm = 60.8;
 distcm = 60;
@@ -132,18 +131,25 @@ for subj = 1:nsubjects
     end
 end
 
+filename = 'full_eye_data.mat'; % exclude trials with blinks <2s before button press. Use these data for plotting microsaccade rates.
+%filename = 'full_eye_data_withblinks.mat'; % for generating trial-wise data to use in linear modeling.
+%filename = 'full_eye_data_replay_withblinks.mat'; % same but for replay catch trials.
+%filename = 'full_eye_data_sharp_withblinks.mat'; % same but for sharp catch trials.
 
-% save('current_data.mat', 'subjects', 'nsubjects', 'ntrials_all', ...
-%     'ntrialstotal_byblock', 'ms_present_all', 'blink_present_all', 'pupil_trace_all', ...
-%     'BinocularSaccades_all', 'posdata_all', 'trial_indices_all', 'ms_amplitudes_all', ...
-%     'ms_directions_all', 'ms_durations_all', 'xyVelocity_all', 'trial_counter_all', ...
-%     'degperpix', 'fps', 'extra', 'nblocks', 'blockorder', '-v7.3');
+save(filename, 'subjects', 'nsubjects', 'ntrials_all', ...
+    'ntrialstotal_byblock', 'ms_present_all', 'blink_present_all', 'pupil_trace_all', ...
+    'BinocularSaccades_all', 'posdata_all', 'trial_indices_all', 'ms_amplitudes_all', ...
+    'ms_directions_all', 'ms_durations_all', 'xyVelocity_all', 'trial_counter_all', ...
+    'degperpix', 'fps', 'extra', 'nblocks', 'blockorder', '-v7.3');
 
 %% just load the saved data
 %datadir = '/export04/data/mlevin/UI_eyelink';
-datadir = '~/Documents/McGill/OneDrive - McGill University/neurospeed/UI_eyelink';
-addpath(genpath(datadir));
-load('current_data.mat');
+datadir = '~/Documents/McGill/OneDrive - McGill University/neurospeed/manuscript_eyetracking/Psychological Science/Open Data Code/Data/Ready-to-Analyze/';
+%filename = [datadir, 'full_eye_data.mat']; % exclude trials with blinks <2s before button press. Use these data for plotting microsaccade rates.
+%filename = [datadir, 'full_eye_data_withblinks.mat']; % for generating trial-wise data to use in linear modeling.
+%filename = [datadir, 'full_eye_data_replay_withblinks.mat']; % same but for replay catch trials.
+filename = [datadir, 'full_eye_data_sharp_withblinks.mat']; % same but for sharp catch trials.
+load(filename);
 
 % set order to: sizes  2 4 6 2 4 6 2 4 6
 %               colors 1 1 1 2 2 2 3 3 3
@@ -170,6 +176,8 @@ blockorder = [4 8 2 3 1 9 5 7 6; ... % subj 201
     9 1 7 4 2 8 6 5 3]; % subj 224
 
 %% epoch trials into block averages
+% Run this section, then run the next plot section (for Figure 2b) or then run
+% save_group_eyebhv.m (For linear modeling and related figures)
 
 rts = []; subjs = []; contrasts = []; eccentricities = []; baseline_retinal_slip_trials = []; ctrst_list=[1 1 1 2 2 2 3 3 3]; ecc_list=[2 4 6 2 4 6 2 4 6];
 nms_baseline = []; immobilization_durations = [];
@@ -179,7 +187,7 @@ early_ms_exist = []; late_ms_exist = []; trial_counter = []; meanmsampl_baseline
 % whole trial length: between t = -1000 to 20000
 
 ntps_before = 5000; ntps_after = 1000; % around button press
-%ntps_before = 1000; ntps_after = 20000; % from stim onset
+%ntps_before = 1000; ntps_after = 20000; % from stim onset?
 ntimepoints = ntps_before + ntps_after + 1;
 reference_point = 'button_press'; % button_press or full_trial (around stim onset) or onset_to_bp (around stim onset but stop at bp)
 
@@ -458,7 +466,7 @@ size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
 color_indices = [1 1 1 2 2 2 3 3 3]; % 1=low contrast, 2=medium, 3=high contrast
 all_indices = [1 1 1 1 1 1 1 1 1];
 
-which2use = 'separate'; % size or color or all (average across all blocks) or separate (plot each condition)
+which2use = 'all'; % size or color or all (average across all blocks) or separate (plot each condition)
 which2plot = 'rate'; % probability, rate, amplitude, pupil, velocity, retinal slip
 subjects2use = 1:nsubjects; % normally all 
 overlay = 1; % overlay the plots on one axis or use subplots
@@ -742,6 +750,9 @@ set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
 savefig(f, 'fig2a.fig');
 exportgraphics(f, 'fig2a.pdf', 'ContentType', 'vector', 'Resolution', 600);
 %% plot each trial gaze timecourses for quality control
+% for one subject at a time, plot the gaze paths for each trial, with
+% detected microsaccades overlaid. Assess if we should raise or lower
+% the noise threshold for microsaccade detection.
 subj = 21;
 startidx = 2; % which of trial_indices should we use
 stopidx = 3;

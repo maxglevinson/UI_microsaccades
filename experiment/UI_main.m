@@ -190,7 +190,7 @@ all_trials=params.nBlocks*params.nTrials_per_block;
 
 data = NaN(all_trials,11);
 % C1 = subject number
-% C2 = trial type (1=illusion, 2=control shift, 3=no soft border, -1=always uniform)
+% C2 = trial type (1=illusion, 2=control shift, 3=no soft border)
 % C3 = block number in the session (1-3)
 % C4 = block color contrast level (1, 2, 3 = low, medium, high)
 % C5 = trial number within block

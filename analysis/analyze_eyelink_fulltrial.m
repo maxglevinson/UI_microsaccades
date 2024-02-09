@@ -17,10 +17,8 @@ trials_file = ['bhv_data/trials_sub' subj_id 's' session_id '.mat'];
 % note for subject 210, I manually combined sessions 3-4 and changed the block
 % numbers of session 4 from [1,2] to [2,3]. Original edfs are unchanged;
 % just the new trials_file is changed. Same general thing done for subj 223.
-% subj 201 also has a 4th session which we should ignore, in which I pressed the button at random
-% times (i.e. control data for comparison)
 
-% if already processed before from ra,k load processed version
+% if already processed before from raw, load processed version
 load(trials_file); % load Trials struct instead of full edf
 
 fps = Trials(1).Header.rec.sample_rate;
@@ -69,11 +67,6 @@ for iTrial = 1:numel(Trials)
                 button_trials(iTrial) = 1;
             end
         end
-        % if analyzing control trials instead, do we want to only take trials where shift
-        % started? e.g., they didn't press the button too early
-        %if ~isfield(Trials(iTrial).KeyEvents, 'SHIFT_ONSET')
-        %    button_trials(iTrial) = 0;
-        %end
     end
 end
 

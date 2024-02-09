@@ -1,1 +1,7 @@
 *.asv
+*DS_Store*
+*.Rhistory*
+*/.Rhistory*
+*.Rhistory
+.Rhistory
+*/.Rhistory
