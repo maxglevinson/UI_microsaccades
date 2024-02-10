@@ -1,12 +1,8 @@
-function [Trials, xyVelocity] = UI_extractMicrosaccades(Trials, eta)
+function Trials = UI_extractMicrosaccades(Trials, eta)
 % custom microsaccade extraction from eyelink data
 % Max Levinson, 2023
 % adapted from edfImport library (A. Pastukhov),
 % Martinez-Conde et al. 2006, and Engbert & Kliegl 2003.
-%
-% second output xyVelocity just gives the xyVelocity variable for one
-% trial: for when we want to post-hoc save it. Just input one trial as
-% Trials argument.
 
 if ~isfield(Trials, 'KeyEvents')
     Trials = edfExtractKeyEventsTiming(Trials); % needed for resolving a bug with blink detection (see get_event_indices)
@@ -396,7 +392,7 @@ Trials(iTrial).Microsaccades = bi_microsaccade_details;
 end
 
 
-%% plot microsaccades
+%% plot microsaccades for quality control
 
 % plot each binocular microsaccade from center
 %figure;plot([zeros(1, numel(bi_microsaccade_details.DeltaX)); bi_microsaccade_details.DeltaX'], [zeros(1, numel(bi_microsaccade_details.DeltaY)); bi_microsaccade_details.DeltaY']); % normalized to (0,0)
