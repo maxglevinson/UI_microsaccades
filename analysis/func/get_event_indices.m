@@ -25,11 +25,11 @@ if ~noevent
             indices_out = [indices_out, (double(data.sttime(ev))-buffer_pre):(double(data.entime(ev))+buffer_post)];
         end
     end
-if data.sttime(1) == 0 % catch bug where eyes weren't tracked at all in the trial. Gives a blink lasting whole trial essentially
-    if data.time(1) > (trialstruct.KeyEvents.STIM_OFFSET - trialstruct.KeyEvents.STIM_ONSET - 1000) % if blink lasts basically whole stim period
-        indices_out = [indices_out, 0:double(data.entime(1))];
+    if data.sttime(1) == 0 % catch bug where eyes weren't tracked at all in the trial. Gives a blink lasting whole trial essentially
+        if data.time(1) > (trialstruct.KeyEvents.STIM_OFFSET - trialstruct.KeyEvents.STIM_ONSET - 1000) % if blink lasts basically whole stim period
+            indices_out = [indices_out, 0:double(data.entime(1))];
+        end
     end
-end
 else
     indices_out = [];
 end

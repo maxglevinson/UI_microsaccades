@@ -30,7 +30,7 @@ params.stimtype = 'color';
 params.subj_id = input('Subject number: ', 's');
 params.session_id = input('Session number: ', 's');
 
-params.scripts_dir='C:\Users\tneuro3\Documents\MATLAB\Max\Uniformity_Illusion\';
+params.scripts_dir='./'; % replace with local directory of experiment code
 addpath(genpath(params.scripts_dir));
 
 % trial timing details

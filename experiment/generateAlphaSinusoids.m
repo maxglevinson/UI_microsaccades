@@ -12,7 +12,7 @@ fcRad = fc*2*pi; % center
 % luminance modulation
 alphaP = sinrange*sin(fpRad.*domain) + 1;
 alphaC = sinrange*sin(fcRad.*domain) + 1;
-% alpha transparency modulation
+% alpha transparency modulation (unused)
 %alphaP = 0.5*sinrange*sin(fpRad.*domain) + 0.5;
 %alphaC = 0.5*sinrange*sin(fcRad.*domain) + 0.5;
 end

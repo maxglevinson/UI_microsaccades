@@ -11,8 +11,7 @@ library(qqplotr)
 library(ggeffects)
 
 ## ---- load individual trials ---- ##
-setwd("/export04/data/mlevin/UI_microsaccades/bhv_data")
-setwd("~/Documents/McGill/OneDrive - McGill University/neurospeed/UI_microsaccades/bhv_data")
+setwd("./") # set current working directory
 df <- read.csv('./trial_data_withblinks.csv',sep = ",",stringsAsFactors = FALSE)
 df$FT = df$RT
 df$baselinemsrate = df$baselinenms / df$FT

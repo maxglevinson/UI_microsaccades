@@ -76,24 +76,24 @@ exclude_blinks = 1; % default yes, but set to 0 if we want to analyze even trial
 subj_extra.excludedsaccadetrials = 0;
 subj_extra.excludedblinktrials = 0;
 if exclude_blinks
-%blink_cutoff = -2000; % for cleaner ms rate curve visual - avoid blinks within 2 seconds before button press
-blink_cutoff = -300; % just during motor reaction time. Better for linear modeling.
-for iTrial = 1:numel(Trials)
-    if button_trials(iTrial)
-        button_idx = Trials(iTrial).KeyEvents.BUTTON_PRESS - Trials(iTrial).KeyEvents.STIM_ONSET; % indexing starts at stim onset
-        blink_indices = get_event_indices(Trials(iTrial), 150, 150, 'blink');
-        saccade_indices = get_event_indices(Trials(iTrial), 150, 150, 'saccade');
-        exclude_indices = button_idx + (blink_cutoff:0); % cuts off at button (t=0), can extend later too
-        if sum(ismember(exclude_indices, blink_indices))
-            button_trials(iTrial) = 0; % remove trial from analysis.
-            subj_extra.excludedblinktrials = subj_extra.excludedblinktrials+1;
-        elseif sum(ismember(exclude_indices, saccade_indices))
-            button_trials(iTrial) = 0;
-            subj_extra.excludedsaccadetrials = subj_extra.excludedsaccadetrials+1;
+    %blink_cutoff = -2000; % for cleaner ms rate curve visual - avoid blinks within 2 seconds before button press
+    blink_cutoff = -300; % just during motor reaction time. Better for linear modeling.
+    for iTrial = 1:numel(Trials)
+        if button_trials(iTrial)
+            button_idx = Trials(iTrial).KeyEvents.BUTTON_PRESS - Trials(iTrial).KeyEvents.STIM_ONSET; % indexing starts at stim onset
+            blink_indices = get_event_indices(Trials(iTrial), 150, 150, 'blink');
+            saccade_indices = get_event_indices(Trials(iTrial), 150, 150, 'saccade');
+            exclude_indices = button_idx + (blink_cutoff:0); % cuts off at button (t=0), can extend later too
+            if sum(ismember(exclude_indices, blink_indices))
+                button_trials(iTrial) = 0; % remove trial from analysis.
+                subj_extra.excludedblinktrials = subj_extra.excludedblinktrials+1;
+            elseif sum(ismember(exclude_indices, saccade_indices))
+                button_trials(iTrial) = 0;
+                subj_extra.excludedsaccadetrials = subj_extra.excludedsaccadetrials+1;
+            end
         end
     end
-end
-clear blink_indices
+    clear blink_indices
 end
 
 trial_counter(~button_trials) = nan;
@@ -143,13 +143,13 @@ for bl = 1:nblocks
         trial_start = Trials(trial_idx).KeyEvents.FIX_ONSET; % tracker time, ms
         stim_start = Trials(trial_idx).KeyEvents.STIM_ONSET; % tracker time, ms
         button_press = Trials(trial_idx).KeyEvents.BUTTON_PRESS; % tracker time, ms
-        
+
         % replace button press for shift onset, if we want to look at data
         % surrounding that timepoint
-%                 if isfield(Trials(trial_idx).KeyEvents, 'SHIFT_ONSET')
-%                     button_press = Trials(trial_idx).KeyEvents.SHIFT_ONSET;
-%                 end
-        
+        %                 if isfield(Trials(trial_idx).KeyEvents, 'SHIFT_ONSET')
+        %                     button_press = Trials(trial_idx).KeyEvents.SHIFT_ONSET;
+        %                 end
+
         trial_end = Trials(trial_idx).KeyEvents.STIM_OFFSET; % tracker time, ms
         full_time = Trials(trial_idx).Samples.time; % tracker time
         trial_start_idx = find(full_time == trial_start); stim_start_idx = find(full_time == stim_start); trial_end_idx = find(full_time == trial_end); button_press_idx = find(full_time == button_press);
@@ -159,7 +159,7 @@ for bl = 1:nblocks
         trial_data(1, :) = trial_data(1, :) - stim_start; % set stim onset to t=0 (so fixation time starts in negative)
         trial_data([2:3], :) = [Trials(trial_idx).Samples.gx(:, trial_time_idx)]; % x pos for both eyes
         trial_data([4:5], :) = [Trials(trial_idx).Samples.gy(:, trial_time_idx)]; % y pos for both eyes
-        
+
         % remove timepoints during and 150ms before/after blinks
         % Blinks measured normally for stimulus period
         blink_indices = [];
@@ -177,27 +177,27 @@ for bl = 1:nblocks
             end
         end
         blink_indices = blink_indices(blink_indices > 0); % keep within trial
-        
+
         trial_data([2:end], blink_indices) = NaN;
-        
+
         trial_data = double(trial_data);
         posdata{bl}{iTrial} = trial_data(1:5, :);
-        
-        
+
+
         % assign each timepoint with whether or not microsaccade is ongoing
         ms_present{bl}{iTrial} = zeros(1, size(trial_data, 2));
-                if ~isempty(Trials(trial_idx).Microsaccades)
-                for ms = 1:numel(Trials(trial_idx).Microsaccades.Start)
-                    msStart = Trials(trial_idx).Microsaccades.Start(ms);
-                    msEnd = Trials(trial_idx).Microsaccades.End(ms);
-                    all_ms_indices = (msStart:msEnd);% - trial_start_idx + 1;
-                    all_ms_indices = all_ms_indices(all_ms_indices > 0 & all_ms_indices <= trial_end_idx);
-                    if ~isempty(all_ms_indices)
-                        ms_present{bl}{iTrial}(all_ms_indices) = 1;
-                    end
+        if ~isempty(Trials(trial_idx).Microsaccades)
+            for ms = 1:numel(Trials(trial_idx).Microsaccades.Start)
+                msStart = Trials(trial_idx).Microsaccades.Start(ms);
+                msEnd = Trials(trial_idx).Microsaccades.End(ms);
+                all_ms_indices = (msStart:msEnd);% - trial_start_idx + 1;
+                all_ms_indices = all_ms_indices(all_ms_indices > 0 & all_ms_indices <= trial_end_idx);
+                if ~isempty(all_ms_indices)
+                    ms_present{bl}{iTrial}(all_ms_indices) = 1;
                 end
-                end
-                all_BinocularSaccades{bl}{iTrial} = Trials(trial_idx).Microsaccades;
+            end
+        end
+        all_BinocularSaccades{bl}{iTrial} = Trials(trial_idx).Microsaccades;
         % get event indices, where trial start (fixation onset) = 1
         start_idx_trial = trial_start_idx - trial_start_idx + 1;
         stim_on_idx_trial = stim_start_idx - trial_start_idx + 1;

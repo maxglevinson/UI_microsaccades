@@ -13,7 +13,7 @@ bg_lum = 0.3; % background grey luminance to match, between 0 - 1
 
 subj_id = input('Subject number: ', 's');
 color_idx = str2num(input('Which color? 1 2 or 3', 's'));
-scripts_dir='C:\Users\tneuro3\Documents\MATLAB\Max\Uniformity_Illusion\';
+scripts_dir='./'; % replace with local directory of experiment code
 addpath(genpath(scripts_dir));
 data_dir=[scripts_dir, 'bhv_data/'];
 mkdir(data_dir);
