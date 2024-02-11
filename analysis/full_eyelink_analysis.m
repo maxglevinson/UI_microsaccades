@@ -64,19 +64,19 @@ for subj = 1:nsubjects
             ms_amplitudes_all_unsorted{subj}{block}{trial} = nan(size(ms_present_all_unsorted{subj}{block}{trial}));
             ms_directions_all_unsorted{subj}{block}{trial} = nan(size(ms_present_all_unsorted{subj}{block}{trial}));
             ms_present_indices = find(ms_present_all_unsorted{subj}{block}{trial});
-                ntrialms = numel(BinocularSaccades_all_unsorted{subj}{block}{trial}.Start);
-                for ms = ms_present_indices
-                    for nms = 1:ntrialms
-                        curr_ms_indices = BinocularSaccades_all_unsorted{subj}{block}{trial}.Start(nms):(BinocularSaccades_all_unsorted{subj}{block}{trial}.End(nms));
-                        if ismember(ms, curr_ms_indices) % if current timepoint is within this microsaccade
-                            ms_amplitudes_all_unsorted{subj}{block}{trial}(ms) = BinocularSaccades_all_unsorted{subj}{block}{trial}.Amplitude(nms); % assign tp with microsaccade's amplitude
+            ntrialms = numel(BinocularSaccades_all_unsorted{subj}{block}{trial}.Start);
+            for ms = ms_present_indices
+                for nms = 1:ntrialms
+                    curr_ms_indices = BinocularSaccades_all_unsorted{subj}{block}{trial}.Start(nms):(BinocularSaccades_all_unsorted{subj}{block}{trial}.End(nms));
+                    if ismember(ms, curr_ms_indices) % if current timepoint is within this microsaccade
+                        ms_amplitudes_all_unsorted{subj}{block}{trial}(ms) = BinocularSaccades_all_unsorted{subj}{block}{trial}.Amplitude(nms); % assign tp with microsaccade's amplitude
                         ms_directions_all_unsorted{subj}{block}{trial}(ms) = BinocularSaccades_all_unsorted{subj}{block}{trial}.Direction(nms); % assign tp with microsaccade's direction
-                        end
                     end
                 end
+            end
         end
     end
-    
+
     % reorder blocks
     ms_present_all{subj} = ms_present_all_unsorted{subj}(blockorder(subj, :));
     BinocularSaccades_all{subj} = BinocularSaccades_all_unsorted{subj}(blockorder(subj, :));
@@ -138,9 +138,9 @@ save(filename, 'subjects', 'nsubjects', 'ntrials_all', ...
 %datadir = '/export04/data/mlevin/UI_eyelink';
 datadir = '~/Documents/McGill/OneDrive - McGill University/neurospeed/manuscript_eyetracking/Psychological Science/Open Data Code/Data/Ready-to-Analyze/';
 %filename = [datadir, 'full_eye_data.mat']; % exclude trials with blinks <2s before button press. Use these data for plotting microsaccade rates.
-%filename = [datadir, 'full_eye_data_withblinks.mat']; % for generating trial-wise data to use in linear modeling.
+filename = [datadir, 'full_eye_data_withblinks.mat']; % for generating trial-wise data to use in linear modeling.
 %filename = [datadir, 'full_eye_data_replay_withblinks.mat']; % same but for replay catch trials.
-filename = [datadir, 'full_eye_data_sharp_withblinks.mat']; % same but for sharp catch trials.
+%filename = [datadir, 'full_eye_data_sharp_withblinks.mat']; % same but for sharp catch trials.
 load(filename);
 
 %% epoch trials into block averages
@@ -247,23 +247,23 @@ for block = 1:nblocks
                                 last_idx = (button_press-500);
                             end
                     end
-                                        
+
                     rts = [rts; rt]; subjs = [subjs; subj]; contrasts = [contrasts; ctrst_list(block)]; eccentricities = [eccentricities; ecc_list(block)];
                     trial_counter = [trial_counter; trial_counter_all{subj}{block}(trial)];
-                                    
+
                     ms_exist = [ms_exist; logical(nansum(ms_present_all{subj}{block}{trial}((stim_on+0):(button_press-300))))];
                     curr_ms_present = ms_present_all{subj}{block}{trial}; % get current trial's timecourse for manipulation
                     curr_posdata = posdata_all{subj}{block}{trial};
                     % remove stim onset transient in ms rate. ONLY for visualization; not removed in the data forwarded on to linear modeling.
                     if strcmp(reference_point, 'button_press')
-                        curr_ms_present(stim_on:(stim_on+700)) = nan; 
+                        curr_ms_present(stim_on:(stim_on+700)) = nan;
                         curr_posdata(:, stim_on:(stim_on+700)) = nan;
                     end
                     block_ms_present(:, trial) = [nan(1, nan_pad_start), curr_ms_present(first_idx:last_idx), nan(1, nan_pad_end)];
                     curr_blink_present = blink_present_all{subj}{block}{trial};
                     block_blink_present(:, trial) = [nan(1, nan_pad_start), curr_blink_present(first_idx:last_idx), nan(1, nan_pad_end)];
                     fulltrial_block_ms_present(:, trial) = [nan(1, nan_pad_start_fulltrial), ms_present_all{subj}{block}{trial}(first_idx_fulltrial:last_idx_fulltrial), nan(1, nan_pad_end_fulltrial)];
-                     % set baseline nms to number of microsaccades from stim onset until button press-300
+                    % set baseline nms to number of microsaccades from stim onset until button press-300
                     unfilled_ms_onsets = [0, diff(ms_present_all{subj}{block}{trial}(stim_on:button_press-300))];
                     unfilled_ms_onsets(unfilled_ms_onsets < 0) = 0;
                     nms_baseline = [nms_baseline; sum(unfilled_ms_onsets)];
@@ -300,331 +300,332 @@ for block = 1:nblocks
                     trial_xPos = (trial_xPos - nanmean(trial_xPos)) * degperpix;
                     trial_yPos = [nan(1, nan_pad_start), nanmean(curr_posdata(4:5, first_idx:last_idx), 1), nan(1, nan_pad_end)];
                     trial_yPos = (trial_yPos - nanmean(trial_yPos)) * degperpix;
-                                            block_Nb(:, trial) = retinal_slip(trial_xPos, trial_yPos, block_ms_present(:, trial), 0); % last arg 1: include microsaccades
+                    block_Nb(:, trial) = retinal_slip(trial_xPos, trial_yPos, block_ms_present(:, trial), 0); % last arg 1: include microsaccades
                     fulltrial_xPos = nanmean(curr_posdata(2:3, :), 1); fulltrial_yPos = nanmean(curr_posdata(4:5, :), 1);
                     fulltrial_xPos = (fulltrial_xPos - nanmean(fulltrial_xPos)) * degperpix; fulltrial_yPos = (fulltrial_yPos - nanmean(fulltrial_yPos)) * degperpix;
-                  fulltrial_block_Nb = retinal_slip(fulltrial_xPos, fulltrial_yPos, ms_present_all{subj}{block}{trial}', 0);
-                   baseline_retinal_slip_trials = [baseline_retinal_slip_trials; nanmean(fulltrial_block_Nb(floor(stim_on/50):floor((button_press-300)/50)))];
-                   if isnan(baseline_retinal_slip_trials(end))
-                       error('tt')
-                   end
+                    fulltrial_block_Nb = retinal_slip(fulltrial_xPos, fulltrial_yPos, ms_present_all{subj}{block}{trial}', 0);
+                    baseline_retinal_slip_trials = [baseline_retinal_slip_trials; nanmean(fulltrial_block_Nb(floor(stim_on/50):floor((button_press-300)/50)))];
+                    if isnan(baseline_retinal_slip_trials(end))
+                        error('tt')
+                    end
+                end
+                ms_rate_all(:, subj, block) = cross_trial_ms_rate(block_ms_present, 'alpha');
+                %[~, ms_rate_all(:, subj, block)] = cross_trial_ms_rate(block_ms_present, 'alpha'); % investigate shuffled ms instead.
+                mean_amplitudes_all(:, subj, block) = nanmean(block_ms_amplitudes, 2);
+                baseline_ms_rate(subj, block) = nanmean(ms_rate_all(1:2000, subj, block)); % first 2000 of epoch = baseline.
+                mean_Nb_all(:, subj, block) = nanmean(block_Nb, 2);
+                baseline_Nb(subj, block) = nanmedian(mean_Nb_all(1:2000/50, subj, block)); % first 2000ms of epoch = baseline
+                baseline_amplitudes(subj, block) = nanmean(mean_amplitudes_all(1:2000, subj, block)); % first 2000 of epoch = baseline.
             end
-            ms_rate_all(:, subj, block) = cross_trial_ms_rate(block_ms_present, 'alpha');
-            %[~, ms_rate_all(:, subj, block)] = cross_trial_ms_rate(block_ms_present, 'alpha'); % investigate shuffled ms instead.
-            mean_amplitudes_all(:, subj, block) = nanmean(block_ms_amplitudes, 2);
-            baseline_ms_rate(subj, block) = nanmean(ms_rate_all(1:2000, subj, block)); % first 2000 of epoch = baseline.
-            mean_Nb_all(:, subj, block) = nanmean(block_Nb, 2);
-            baseline_Nb(subj, block) = nanmedian(mean_Nb_all(1:2000/50, subj, block)); % first 2000ms of epoch = baseline
-            baseline_amplitudes(subj, block) = nanmean(mean_amplitudes_all(1:2000, subj, block)); % first 2000 of epoch = baseline.
         end
     end
 end
 
-% normalize everything by subject baseline means
-norm_ms_rate_all = nan(size(ms_rate_all));
-norm_Nb_all = nan(size(mean_Nb_all));
-norm_amplitudes_all = nan(size(mean_amplitudes_all));
-for subj = 1:nsubjects
-    norm_ms_rate_all(:, subj, :) = (ms_rate_all(:, subj, :) ./ nanmean(baseline_ms_rate(subj, :))) .* nanmean(nanmean(baseline_ms_rate));
-    norm_Nb_all(:, subj, :) = mean_Nb_all(:, subj, :) ./ nanmean(baseline_Nb(subj, :));
-    norm_amplitudes_all(:, subj, :) = mean_amplitudes_all(:, subj, :) ./ nanmean(baseline_amplitudes(subj, :));
-end
-
-% save trial data in .csv for linear modeling/plotting in R
-fts = rts ./ 1000;
-immobs_seconds = immobilization_durations ./ 1000 .* -1; % make positive and in seconds
-
-tabledata = [subjs, fts, nms_baseline, baseline_retinal_slip_trials, immobs_seconds, immob_ms_amplitudes, contrasts, eccentricities, ms_exist, nblinks_baseline, trial_counter];
-T = array2table(tabledata, 'VariableNames', {'subject', 'FT', 'baselinenms', 'baselineretinalslip', 'immobduration', 'immobmsamplitude', 'contrast', 'eccentricity', 'mspresent', 'nblinks', 'trial'});
-%filename = 'trial_data_withblinks.csv'; % main illusion trials
-%filename = 'trial_data_replay_withblinks.csv'; % replay catch trials
-filename = 'trial_data_sharp_withblinks.csv'; % sharp catch trials
-writetable(T, filename);
-
-%% plot averaged by size or contrast
-
-window_length = 200;
-% average contrasts together or averaged sizes together
-size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
-color_indices = [1 1 1 2 2 2 3 3 3]; % 1=low contrast, 2=medium, 3=high contrast
-all_indices = [1 1 1 1 1 1 1 1 1];
-
-which2use = 'all'; % size or color or all (average across all blocks) or separate (plot each condition)
-which2plot = 'rate'; % rate, amplitude, retinal slip. Only rate is analyzed but other options included if of interest.
-subjects2use = 1:nsubjects; % default: all 
-overlay = 1; % overlay the plots on one axis or use subplots
-plotcolors = {[1 0 0], [0 1 0], [0 0 1]};
-nobounds = 0; % just plot line, no stderr bounds?
-
-f = figure; hold on;
-%for subj = 1:nsubjects % plot each subject separately?
-%    subjects2use = subj;
-%figure; hold on;
-for i = 1:9
-    switch which2use
-        case 'size'
-            if overlay; hold on; else; subplot(1, 3, i); end
-                curr_block_idx = find(size_indices == i); % if plotting by size
-        case 'color'
-            if overlay; hold on; else; subplot(1, 3, i); end
-                curr_block_idx = find(color_indices == i); % if plotting by color
-        case 'all'
-                curr_block_idx = find(all_indices);
-            plotcolors = {[0 0 0]};
-        case 'separate'
-            if overlay; hold on; else; subplot(3, 3, i); end
-            curr_block_idx = i;
-            plotcolors = {[0 0 .33], [0 .33 0], [.33 0 0], [0 0 .66], [0 .66 0], [.66 0 0], [0 0 1], [0 1 0], [1 0 0]}; % colors = sizes
-            %plotcolors = {[.33 0 0], [.66 0 0], [1 0 0], [0 .33 0], [0 .66 0], [0 1 0], [0 0 .33], [0 0 .66], [0 0 1]}; % colors = contrasts
+    % normalize everything by subject baseline means
+    norm_ms_rate_all = nan(size(ms_rate_all));
+    norm_Nb_all = nan(size(mean_Nb_all));
+    norm_amplitudes_all = nan(size(mean_amplitudes_all));
+    for subj = 1:nsubjects
+        norm_ms_rate_all(:, subj, :) = (ms_rate_all(:, subj, :) ./ nanmean(baseline_ms_rate(subj, :))) .* nanmean(nanmean(baseline_ms_rate));
+        norm_Nb_all(:, subj, :) = mean_Nb_all(:, subj, :) ./ nanmean(baseline_Nb(subj, :));
+        norm_amplitudes_all(:, subj, :) = mean_amplitudes_all(:, subj, :) ./ nanmean(baseline_amplitudes(subj, :));
     end
-    
-    switch which2plot
-        case 'rate'
+
+    % save trial data in .csv for linear modeling/plotting in R
+    fts = rts ./ 1000;
+    immobs_seconds = immobilization_durations ./ 1000 .* -1; % make positive and in seconds
+
+    tabledata = [subjs, fts, nms_baseline, baseline_retinal_slip_trials, immobs_seconds, immob_ms_amplitudes, contrasts, eccentricities, ms_exist, nblinks_baseline, trial_counter];
+    T = array2table(tabledata, 'VariableNames', {'subject', 'FT', 'baselinenms', 'baselineretinalslip', 'immobduration', 'immobmsamplitude', 'contrast', 'eccentricity', 'mspresent', 'nblinks', 'trial'});
+    filename = 'trial_data_withblinks.csv'; % main illusion trials
+    %filename = 'trial_data_replay_withblinks.csv'; % replay catch trials
+    %filename = 'trial_data_sharp_withblinks.csv'; % sharp catch trials
+    writetable(T, filename);
+
+    %% plot averaged by size or contrast
+
+    window_length = 200;
+    % average contrasts together or averaged sizes together
+    size_indices = [3 2 1 3 2 1 3 2 1]; % 1=size 6, 2=size 4, 3=size 2
+    color_indices = [1 1 1 2 2 2 3 3 3]; % 1=low contrast, 2=medium, 3=high contrast
+    all_indices = [1 1 1 1 1 1 1 1 1];
+
+    which2use = 'all'; % size or color or all (average across all blocks) or separate (plot each condition)
+    which2plot = 'rate'; % rate, amplitude, retinal slip. Only rate is analyzed but other options included if of interest.
+    subjects2use = 1:nsubjects; % default: all
+    overlay = 1; % overlay the plots on one axis or use subplots
+    plotcolors = {[1 0 0], [0 1 0], [0 0 1]};
+    nobounds = 0; % just plot line, no stderr bounds?
+
+    f = figure; hold on;
+    %for subj = 1:nsubjects % plot each subject separately?
+    %    subjects2use = subj;
+    %figure; hold on;
+    for i = 1:9
+        switch which2use
+            case 'size'
+                if overlay; hold on; else; subplot(1, 3, i); end
+                curr_block_idx = find(size_indices == i); % if plotting by size
+            case 'color'
+                if overlay; hold on; else; subplot(1, 3, i); end
+                curr_block_idx = find(color_indices == i); % if plotting by color
+            case 'all'
+                curr_block_idx = find(all_indices);
+                plotcolors = {[0 0 0]};
+            case 'separate'
+                if overlay; hold on; else; subplot(3, 3, i); end
+                curr_block_idx = i;
+                plotcolors = {[0 0 .33], [0 .33 0], [.33 0 0], [0 0 .66], [0 .66 0], [.66 0 0], [0 0 1], [0 1 0], [1 0 0]}; % colors = sizes
+                %plotcolors = {[.33 0 0], [.66 0 0], [1 0 0], [0 .33 0], [0 .66 0], [0 1 0], [0 0 .33], [0 0 .66], [0 0 1]}; % colors = contrasts
+        end
+
+        switch which2plot
+            case 'rate'
                 norm_ms_rate_all(isinf(norm_ms_rate_all)) = nan;
                 ms_rate_corr = norm_ms_rate_all(:, subjects2use, curr_block_idx);
                 %ms_rate_corr = ms_rate_all(:, subjects2use, curr_block_idx); % not subject normalized
-            ms_rate_curr = nanmean(ms_rate_corr, 3);
-            % plot ms rate
-            mean_ms_rate = nanmean(ms_rate_curr, 2);
-            stderr_ms_rate = nanstd(ms_rate_curr, 0, 2) ./ sqrt(numel(subjects2use));
-            if nobounds
-                bp = plot(rate_timepoints(250:end-250), mean_ms_rate(250:end-250), 'Color', plotcolors{i});
-            else
-                bp = boundedline(rate_timepoints(250:end-250), mean_ms_rate(250:end-250), stderr_ms_rate(250:end-250), 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
-            end
-            ylbl = 'microsaccade rate (Hz)';
-            
-        case 'amplitude'
-            % plot average ms amplitudes
-            %ms_amplitude_corr = mean_amplitudes_all(:, subjects2use, curr_block_idx); % not subject normalized
-            ms_amplitude_corr = norm_amplitudes_all(:, subjects2use, curr_block_idx) .* nanmean(nanmean(baseline_amplitudes)); % normalize, then multiply by total mean to interpret it
-            ms_amplitude_curr = nanmean(ms_amplitude_corr, 3);
-            mean_ms_amplitude = nanmean(ms_amplitude_curr, 2);
-            stderr_ms_amplitude = nanstd(ms_amplitude_curr, 0, 2) ./ sqrt(nsubjects);
-            smoothed_ampl = smoothdata(mean_ms_amplitude, 'movmean', window_length);
-            smoothed_stderr_ampl = smoothdata(stderr_ms_amplitude, 'movmean', window_length);
-            bp = boundedline((-ntps_before:ntps_after)' * 1000/fps, smoothed_ampl, smoothed_stderr_ampl, 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
-            ylbl = 'm.s. amplitude (deg)';
-            
-        case 'retinal slip'
-            % plot retinal slip (nboxes of 0.01 length traversed in 50 ms steps)
+                ms_rate_curr = nanmean(ms_rate_corr, 3);
+                % plot ms rate
+                mean_ms_rate = nanmean(ms_rate_curr, 2);
+                stderr_ms_rate = nanstd(ms_rate_curr, 0, 2) ./ sqrt(numel(subjects2use));
+                if nobounds
+                    bp = plot(rate_timepoints(250:end-250), mean_ms_rate(250:end-250), 'Color', plotcolors{i});
+                else
+                    bp = boundedline(rate_timepoints(250:end-250), mean_ms_rate(250:end-250), stderr_ms_rate(250:end-250), 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
+                end
+                ylbl = 'microsaccade rate (Hz)';
+
+            case 'amplitude'
+                % plot average ms amplitudes
+                %ms_amplitude_corr = mean_amplitudes_all(:, subjects2use, curr_block_idx); % not subject normalized
+                ms_amplitude_corr = norm_amplitudes_all(:, subjects2use, curr_block_idx) .* nanmean(nanmean(baseline_amplitudes)); % normalize, then multiply by total mean to interpret it
+                ms_amplitude_curr = nanmean(ms_amplitude_corr, 3);
+                mean_ms_amplitude = nanmean(ms_amplitude_curr, 2);
+                stderr_ms_amplitude = nanstd(ms_amplitude_curr, 0, 2) ./ sqrt(nsubjects);
+                smoothed_ampl = smoothdata(mean_ms_amplitude, 'movmean', window_length);
+                smoothed_stderr_ampl = smoothdata(stderr_ms_amplitude, 'movmean', window_length);
+                bp = boundedline((-ntps_before:ntps_after)' * 1000/fps, smoothed_ampl, smoothed_stderr_ampl, 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
+                ylbl = 'm.s. amplitude (deg)';
+
+            case 'retinal slip'
+                % plot retinal slip (nboxes of 0.01 length traversed in 50 ms steps)
                 mean_Nb_curr = nanmean(norm_Nb_all(:, subjects2use, curr_block_idx), 3) .* nanmean(nanmean(baseline_Nb)); % normalize, then multiply by total mean to interpret it
                 %mean_Nb_curr = nanmean(mean_Nb_all(:, subjects2use, curr_block_idx), 3); % raw mean
-            mean_Nb = nanmean(mean_Nb_curr, 2);
-            stderr_Nb = nanstd(mean_Nb_curr, 0, 2) ./ sqrt(nsubjects);
-            Nb_window_length = window_length / 50;
-            smoothed_mean_Nb = smoothdata(mean_Nb, 'movmean', Nb_window_length/stepsize);
-            smoothed_stderr_Nb = smoothdata(stderr_Nb, 'movmean', Nb_window_length/stepsize);
-            % convert Nb to dva: multiply by 0.01 dva
-            smoothed_mean_Nb = smoothed_mean_Nb * 0.01; smoothed_stderr_Nb = smoothed_stderr_Nb * 0.01;
-            bp = boundedline(Nb_timepoints, smoothed_mean_Nb, smoothed_stderr_Nb, 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
-            ylbl = 'retinal slip (deg / 50ms)';
-            
-    end
-    set(bp, 'LineWidth', 1);
-    
-    H = gca;
-    H.LineWidth = 2;
-    
-    % plot vertical line at t=0 (button press)
-    curr_ylim = get(gca, 'ylim');
-    hold on; zeroline = plot([0 0], curr_ylim, '--k');
-    set(get(get(zeroline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-    % set axis limits
-    curr_xlim = get(gca, 'xlim');
-    if numel(subjects2use) > 1
-        switch which2plot
-            case 'rate'
-                if strcmp(which2use, 'separate')
-                    set(gca, 'ylim', [0 1.8]);
-                else
-                set(gca, 'ylim', [0.3 1.3]);
-                end
-            case 'amplitude'
-                set(gca, 'ylim', [0.2 0.5]);
-            case 'retinal slip'
-                set(gca, 'ylim', [0.15 0.2]);
+                mean_Nb = nanmean(mean_Nb_curr, 2);
+                stderr_Nb = nanstd(mean_Nb_curr, 0, 2) ./ sqrt(nsubjects);
+                Nb_window_length = window_length / 50;
+                smoothed_mean_Nb = smoothdata(mean_Nb, 'movmean', Nb_window_length/stepsize);
+                smoothed_stderr_Nb = smoothdata(stderr_Nb, 'movmean', Nb_window_length/stepsize);
+                % convert Nb to dva: multiply by 0.01 dva
+                smoothed_mean_Nb = smoothed_mean_Nb * 0.01; smoothed_stderr_Nb = smoothed_stderr_Nb * 0.01;
+                bp = boundedline(Nb_timepoints, smoothed_mean_Nb, smoothed_stderr_Nb, 'cmap', plotcolors{i}, 'alpha', 'transparency', 0.05);
+                ylbl = 'retinal slip (deg / 50ms)';
+
         end
-    end
-    
-    
-    % add y/x axis labels
-    if ~overlay && ~strcmp(which2use, 'all')
-        if i == 1
-            ylabel('small');
-        elseif i == 2
-            ylabel('medium');
-        elseif i == 3
-            ylabel('large');
-            xlabel('time (s)');
+        set(bp, 'LineWidth', 1);
+
+        H = gca;
+        H.LineWidth = 2;
+
+        % plot vertical line at t=0 (button press)
+        curr_ylim = get(gca, 'ylim');
+        hold on; zeroline = plot([0 0], curr_ylim, '--k');
+        set(get(get(zeroline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+        % set axis limits
+        curr_xlim = get(gca, 'xlim');
+        if numel(subjects2use) > 1
+            switch which2plot
+                case 'rate'
+                    if strcmp(which2use, 'separate')
+                        set(gca, 'ylim', [0 1.8]);
+                    else
+                        set(gca, 'ylim', [0.3 1.3]);
+                    end
+                case 'amplitude'
+                    set(gca, 'ylim', [0.2 0.5]);
+                case 'retinal slip'
+                    set(gca, 'ylim', [0.15 0.2]);
+            end
         end
-    else
+
+
+        % add y/x axis labels
+        if ~overlay && ~strcmp(which2use, 'all')
+            if i == 1
+                ylabel('small');
+            elseif i == 2
+                ylabel('medium');
+            elseif i == 3
+                ylabel('large');
+                xlabel('time (s)');
+            end
+        else
             ylabel(which2plot);
-        xlabel('time (s)');
+            xlabel('time (s)');
+            if strcmp(which2use, 'all')
+                set(bp, 'Color', [0 0 0]);
+            end
+        end
         if strcmp(which2use, 'all')
-            set(bp, 'Color', [0 0 0]);
+            break
+        elseif ~strcmp(which2use, 'separate') && i == 3
+            break
         end
     end
-    if strcmp(which2use, 'all')
-        break
-    elseif ~strcmp(which2use, 'separate') && i == 3
-        break
+    switch which2use
+        case 'size'
+            if overlay
+                legend({'large', 'medium', 'small'});
+                sl = title([which2plot ' by boundary eccentricity']);
+            else
+                sl = suplabel('center radius', 'y');
+            end
+            set(sl, 'FontSize', 12);
+        case 'color'
+            if overlay
+                legend({'low', 'medium', 'high'});
+                sl = title([which2plot ' by color contrast']);
+            else
+                sl = suplabel('color contrast', 'y');
+            end
+            set(sl, 'FontSize', 12);
+        case 'separate'
+            if overlay
+                lgnd = legend({'small low', 'medium low', 'large low', 'small medium', 'medium medium', 'large medium', 'small high', 'medium high', 'large high'});
+                sl = title([which2plot ' by condition']);
+            else
+                sly = suplabel('color contrast', 'y');
+                slx = suplabel('center size', 'x');
+            end
     end
-end
-switch which2use
-    case 'size'
-        if overlay
-            legend({'large', 'medium', 'small'});
-            sl = title([which2plot ' by boundary eccentricity']);
-        else
-            sl = suplabel('center radius', 'y');
-        end
-        set(sl, 'FontSize', 12);
-    case 'color'
-        if overlay
-            legend({'low', 'medium', 'high'});
-            sl = title([which2plot ' by color contrast']);
-        else
-            sl = suplabel('color contrast', 'y');
-        end
-        set(sl, 'FontSize', 12);
-    case 'separate'
-        if overlay
-            lgnd = legend({'small low', 'medium low', 'large low', 'small medium', 'medium medium', 'large medium', 'small high', 'medium high', 'large high'});
-            sl = title([which2plot ' by condition']);
-        else
-            sly = suplabel('color contrast', 'y');
-            slx = suplabel('center size', 'x');
-        end
+    set(gca, 'FontSize', 9);
+
+    % set subject color if plotting just 1 subject at a time
+    if numel(subjects2use) == 1
+        clrs = colormap;
+        set(bp, 'Color', clrs(subjects2use * 3, :));
+        set(bp, 'LineWidth', 1); % or make line smaller
     end
-set(gca, 'FontSize', 9);
 
-% set subject color if plotting just 1 subject at a time
-if numel(subjects2use) == 1
-    clrs = colormap;
-    set(bp, 'Color', clrs(subjects2use * 3, :));
-    set(bp, 'LineWidth', 1); % or make line smaller
-end
+    hold on;
+    xxlim = get(gca, 'xlim');
 
-hold on;
-xxlim = get(gca, 'xlim');
+    %end % uncomment if plotting each subject individually
 
-%end % uncomment if plotting each subject individually
+    ylabel(ylbl);
+    legend boxoff
 
-ylabel(ylbl);
-legend boxoff
+    % Override some plotting parameters for manuscript figures
+    ylbl = ylabel('Normalized Microsaccade Rate (Hz)');
+    xlbl = xlabel('Time (ms)');
+    ttl = title('Microsaccades Time-Locked to Fading Reports', 'FontWeight', 'Normal');
+    set(gca, 'FontSize', 9, 'LineWidth', 1);
+    set(bp, 'LineWidth', 1);
+    set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
 
-% Override some plotting parameters for manuscript figures
-ylbl = ylabel('Normalized Microsaccade Rate (Hz)');
-xlbl = xlabel('Time (ms)');
-ttl = title('Microsaccades Time-Locked to Fading Reports', 'FontWeight', 'Normal');
-set(gca, 'FontSize', 9, 'LineWidth', 1);
-set(bp, 'LineWidth', 1);
-set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
+    switch which2use
+        case 'all' % Figure 2b
+            legend off
+            set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
+            savefig(f, 'fig2b.fig');
+            exportgraphics(f, 'fig2b.pdf', 'ContentType', 'vector', 'Resolution', 600);
+        case 'separate' % Supplementary Figure 2
+            set(gcf, 'Units', 'Inches', 'Position', [0, 0, 6, 3]);
+            legend('Location', 'Southwest', 'NumColumns', 3, 'FontSize', 9);
+            default_legendlinelength = lgnd.ItemTokenSize;
+            lgnd.ItemTokenSize = default_legendlinelength / 2;
+            savefig(f, 'figs2.fig');
+            exportgraphics(f, 'figs2.pdf', 'ContentType', 'vector', 'Resolution', 600);
+    end
 
-switch which2use
-    case 'all' % Figure 2b
-        legend off
-set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
-savefig(f, 'fig2b.fig');
-exportgraphics(f, 'fig2b.pdf', 'ContentType', 'vector', 'Resolution', 600);
-    case 'separate' % Supplementary Figure 2
-        set(gcf, 'Units', 'Inches', 'Position', [0, 0, 6, 3]);
-        legend('Location', 'Southwest', 'NumColumns', 3, 'FontSize', 9);
-        default_legendlinelength = lgnd.ItemTokenSize;
-        lgnd.ItemTokenSize = default_legendlinelength / 2;
-        savefig(f, 'figs2.fig');
-        exportgraphics(f, 'figs2.pdf', 'ContentType', 'vector', 'Resolution', 600);
-end
-
-%% microsaccade characteristics
-% plot xy amplitude vs peak xy velocity
-all_xy_amplitudes = [];
-all_xy_peakvelocities = [];
-all_durations = [];
-all_subjnums = []; % label each ms with its subject
-for subj = 1:nsubjects
-    for block = 1:nblocks
-        for trial = 1:numel(BinocularSaccades_all{subj}{block})
-            if ~isempty(BinocularSaccades_all{subj}{block}{trial})
-                all_xy_amplitudes = [all_xy_amplitudes; BinocularSaccades_all{subj}{block}{trial}.Amplitude];
-                all_xy_peakvelocities = [all_xy_peakvelocities; BinocularSaccades_all{subj}{block}{trial}.vPeak];
-                all_durations = [all_durations; BinocularSaccades_all{subj}{block}{trial}.Duration];
-                all_subjnums = [all_subjnums; repmat(subj, numel(BinocularSaccades_all{subj}{block}{trial}.Duration'), 1)];
+    %% microsaccade characteristics
+    % plot xy amplitude vs peak xy velocity
+    all_xy_amplitudes = [];
+    all_xy_peakvelocities = [];
+    all_durations = [];
+    all_subjnums = []; % label each ms with its subject
+    for subj = 1:nsubjects
+        for block = 1:nblocks
+            for trial = 1:numel(BinocularSaccades_all{subj}{block})
+                if ~isempty(BinocularSaccades_all{subj}{block}{trial})
+                    all_xy_amplitudes = [all_xy_amplitudes; BinocularSaccades_all{subj}{block}{trial}.Amplitude];
+                    all_xy_peakvelocities = [all_xy_peakvelocities; BinocularSaccades_all{subj}{block}{trial}.vPeak];
+                    all_durations = [all_durations; BinocularSaccades_all{subj}{block}{trial}.Duration];
+                    all_subjnums = [all_subjnums; repmat(subj, numel(BinocularSaccades_all{subj}{block}{trial}.Duration'), 1)];
+                end
             end
         end
     end
-end
 
-% remove too big or too small
-all_xy_amplitudes_sort = all_xy_amplitudes(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
-all_xy_peakvelocities_sort = all_xy_peakvelocities(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
-all_subjnums_sort = all_subjnums(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
-all_durations_sort = all_durations(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
-f = figure; hold on;
-scatter(all_xy_amplitudes_sort(all_durations_sort > 0), all_xy_peakvelocities_sort(all_durations_sort > 0), 2, 'filled', 'k', 'MarkerFaceAlpha', 0.05);
+    % remove too big or too small
+    all_xy_amplitudes_sort = all_xy_amplitudes(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
+    all_xy_peakvelocities_sort = all_xy_peakvelocities(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
+    all_subjnums_sort = all_subjnums(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
+    all_durations_sort = all_durations(all_xy_amplitudes < 2 & all_xy_peakvelocities < 300);
+    f = figure; hold on;
+    scatter(all_xy_amplitudes_sort(all_durations_sort > 0), all_xy_peakvelocities_sort(all_durations_sort > 0), 2, 'filled', 'k', 'MarkerFaceAlpha', 0.05);
 
-% plotting parameters for Figure 2a
-set(gca, 'xscale', 'log'); set(gca, 'yscale', 'log');
-set(gca, 'FontSize', 9, 'LineWidth', 1);
-set(gca, 'FontName', 'Helvetica')
-xlbl = xlabel('Amplitude (dva)'); ylbl = ylabel('Velocity (dva/s)');
-ttl = title('Microsaccade Main Sequence', 'FontWeight', 'Normal');
-set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
-set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
+    % plotting parameters for Figure 2a
+    set(gca, 'xscale', 'log'); set(gca, 'yscale', 'log');
+    set(gca, 'FontSize', 9, 'LineWidth', 1);
+    set(gca, 'FontName', 'Helvetica')
+    xlbl = xlabel('Amplitude (dva)'); ylbl = ylabel('Velocity (dva/s)');
+    ttl = title('Microsaccade Main Sequence', 'FontWeight', 'Normal');
+    set(gcf, 'Units','Inches', 'Position', [0, 0, 4, 3]);
+    set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
 
-savefig(f, 'fig2a.fig');
-exportgraphics(f, 'fig2a.pdf', 'ContentType', 'vector', 'Resolution', 600);
-%% plot each trial gaze timecourses for quality control
-% for one subject at a time, plot the gaze paths for each trial, with
-% detected microsaccades overlaid. Assess if we should raise or lower
-% the noise threshold for microsaccade detection.
-subj = 21;
-startidx = 2; % which of trial_indices should we use
-stopidx = 3;
-% 1: fixation onset, 2: stim onset, 3: button press, 4: stim offset
-eyecolors = {'r', 'b'};
-dircolors = {'r', 'b'};
-window_length_tps = 31; % for smoothing
+    savefig(f, 'fig2a.fig');
+    exportgraphics(f, 'fig2a.pdf', 'ContentType', 'vector', 'Resolution', 600);
+    %% plot each trial gaze timecourses for quality control
+    % for one subject at a time, plot the gaze paths for each trial, with
+    % detected microsaccades overlaid. Assess if we should raise or lower
+    % the noise threshold for microsaccade detection.
+    subj = 21;
+    startidx = 2; % which of trial_indices should we use
+    stopidx = 3;
+    % 1: fixation onset, 2: stim onset, 3: button press, 4: stim offset
+    eyecolors = {'r', 'b'};
+    dircolors = {'r', 'b'};
+    window_length_tps = 31; % for smoothing
 
-for iBlock = 1:nblocks
-    ntrials = ntrials_all(subj, iBlock);
-    plotdim1 = floor(sqrt(ntrials));
-    plotdim2 = ceil(ntrials/plotdim1);
-    fh = figure; suptitle(['s', num2str(subjects(subj)), ' block ', num2str(iBlock)]);
-    fh.WindowState = 'maximized';
-    for iTrial = 1:ntrials
-        starttp = trial_indices_all{subj}{iBlock}(iTrial, startidx);
-        stoptp = trial_indices_all{subj}{iBlock}(iTrial, stopidx);
-        gazeX = posdata_all{subj}{iBlock}{iTrial}(2:3, starttp:stoptp);
-        gazeY = posdata_all{subj}{iBlock}{iTrial}(4:5, starttp:stoptp);
-        % smooth data
-        gazeX = smoothdata(gazeX, 2, 'movmean', window_length_tps);
-        gazeY = smoothdata(gazeY, 2, 'movmean', window_length_tps);
-        gazeX = (gazeX - nanmean(gazeX, 2)) * degperpix; % coordinates from center (0) (pixels)
-        gazeY = (gazeY - nanmean(gazeY, 2)) * degperpix;
-        gazeXms = gazeX; gazeXms(:, ms_present_all{subj}{iBlock}{iTrial}(starttp:stoptp) ~= 1) = NaN;
-        gazeYms = gazeY; gazeYms(:, ms_present_all{subj}{iBlock}{iTrial}(starttp:stoptp) ~= 1) = NaN;
-        subplot(plotdim1, plotdim2, iTrial); hold on;
-        % plot each eye?
-        %         for iEye = 1:2
-        %             % plot x vs y
-        %             %plot(gazeX(iEye, :), gazeY(iEye, :), eyecolors{iEye});
-        %             %plot(gazeXms(iEye, :), gazeYms(iEye, :), 'k', 'LineWidth', 5);
-        %             % plot x vs time, y vs time
-        %             time = 1:size(gazeX(1, :), 2);
-        %             plot(time, gazeX(iEye, :), dircolors{1}, time, gazeY(iEye, :), dircolors{2}, 'LineWidth', 1);
-        %             plot(time, gazeXms(eye, :), 'k', time, gazeYms(iEye, :), 'k', 'LineWidth', 3);
-        %         end
-        % average eyes
-        gazeYavg = nanmean(gazeY, 1); gazeYmsavg = nanmean(gazeYms, 1);
-        gazeXavg = nanmean(gazeX, 1); gazeXmsavg = nanmean(gazeXms, 1);
-        % plot x vs y
-        %plot(gazeXavg, gazeYavg, eyecolors{1});
-        %plot(gazeXmsavg, gazeYmsavg, 'k');
-        % plot x vs time, y vs time
-        time = 1:size(gazeXavg, 2);
-        plot(time, gazeXavg, dircolors{1}, time, gazeYavg, dircolors{2}, 'LineWidth', 1);
-        plot(time, gazeXmsavg, 'k', time, gazeYmsavg, 'k', 'LineWidth', 3);
+    for iBlock = 1:nblocks
+        ntrials = ntrials_all(subj, iBlock);
+        plotdim1 = floor(sqrt(ntrials));
+        plotdim2 = ceil(ntrials/plotdim1);
+        fh = figure; suptitle(['s', num2str(subjects(subj)), ' block ', num2str(iBlock)]);
+        fh.WindowState = 'maximized';
+        for iTrial = 1:ntrials
+            starttp = trial_indices_all{subj}{iBlock}(iTrial, startidx);
+            stoptp = trial_indices_all{subj}{iBlock}(iTrial, stopidx);
+            gazeX = posdata_all{subj}{iBlock}{iTrial}(2:3, starttp:stoptp);
+            gazeY = posdata_all{subj}{iBlock}{iTrial}(4:5, starttp:stoptp);
+            % smooth data
+            gazeX = smoothdata(gazeX, 2, 'movmean', window_length_tps);
+            gazeY = smoothdata(gazeY, 2, 'movmean', window_length_tps);
+            gazeX = (gazeX - nanmean(gazeX, 2)) * degperpix; % coordinates from center (0) (pixels)
+            gazeY = (gazeY - nanmean(gazeY, 2)) * degperpix;
+            gazeXms = gazeX; gazeXms(:, ms_present_all{subj}{iBlock}{iTrial}(starttp:stoptp) ~= 1) = NaN;
+            gazeYms = gazeY; gazeYms(:, ms_present_all{subj}{iBlock}{iTrial}(starttp:stoptp) ~= 1) = NaN;
+            subplot(plotdim1, plotdim2, iTrial); hold on;
+            % plot each eye?
+            %         for iEye = 1:2
+            %             % plot x vs y
+            %             %plot(gazeX(iEye, :), gazeY(iEye, :), eyecolors{iEye});
+            %             %plot(gazeXms(iEye, :), gazeYms(iEye, :), 'k', 'LineWidth', 5);
+            %             % plot x vs time, y vs time
+            %             time = 1:size(gazeX(1, :), 2);
+            %             plot(time, gazeX(iEye, :), dircolors{1}, time, gazeY(iEye, :), dircolors{2}, 'LineWidth', 1);
+            %             plot(time, gazeXms(eye, :), 'k', time, gazeYms(iEye, :), 'k', 'LineWidth', 3);
+            %         end
+            % average eyes
+            gazeYavg = nanmean(gazeY, 1); gazeYmsavg = nanmean(gazeYms, 1);
+            gazeXavg = nanmean(gazeX, 1); gazeXmsavg = nanmean(gazeXms, 1);
+            % plot x vs y
+            %plot(gazeXavg, gazeYavg, eyecolors{1});
+            %plot(gazeXmsavg, gazeYmsavg, 'k');
+            % plot x vs time, y vs time
+            time = 1:size(gazeXavg, 2);
+            plot(time, gazeXavg, dircolors{1}, time, gazeYavg, dircolors{2}, 'LineWidth', 1);
+            plot(time, gazeXmsavg, 'k', time, gazeYmsavg, 'k', 'LineWidth', 3);
+        end
     end
-end
