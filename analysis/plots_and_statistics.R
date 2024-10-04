@@ -89,7 +89,7 @@ bxp <- ggboxplot(
   color = "eccentricity", palette = "rgb",
   add = c("jitter"), add.params = list(alpha=.5),
 )
-bxp = bxp + ylab('Normalized Fading Time (s)') + xlab('Color Contrast (deg)') + ggtitle('Fading Times by Boundary Strength')
+bxp = bxp + ylab('Normalized Filling-in Time (s)') + xlab('Color Contrast (deg)') + ggtitle('Filling-in Times by Boundary Strength')
 bxp = bxp + scale_x_discrete(labels = c("10", "20", "30")) + scale_colour_discrete(name="Eccentricity (deg)", labels=c("6", "4", "2"), guide = guide_legend(nrow=1)) # for contrast
 bxp = bxp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10),
                   legend.text = element_text(size = 9), legend.title = element_text(size = 9), plot.title = element_text(size = 12, hjust=0.5))
@@ -105,7 +105,7 @@ ggsave(plot = bxp, width = 4, height = 3, dpi = 600, filename = "fig1c.pdf")
 
 ## Figure 1d: density plots by trialtype
 dp <- ggplot(dfall, aes(x=FT, linetype=trialtype)) + stat_density(geom="line", linewidth=1, position="identity") + theme_classic() + 
-  xlab('Fading Time (s)') + ylab('Density') + ggtitle('Fading Time Distributions') +
+  xlab('Filling-in Time (s)') + ylab('Density') + ggtitle('Filling-in Time Distributions') +
   scale_linetype_manual(name="Trial Type", values=c("solid", "dashed", "dotted")) + guides(linetype = guide_legend(override.aes = list(linewidth = 0.5)))
 dp = dp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10), plot.title = element_text(size = 12, hjust=0.5),
                   legend.text = element_text(size = 9), legend.title = element_text(size = 9), axis.text = element_text(size = 9, colour="black"))
@@ -128,7 +128,7 @@ bxp <- ggboxplot(
   color = "source",
   add = c("jitter"), add.params = list(alpha=.5)
 )
-bxp = bxp + ylab('Fading Time (s)') + theme(text = element_text(size = 20))
+bxp = bxp + ylab('Filling-in Time (s)') + theme(text = element_text(size = 20))
 #bxp = bxp + scale_x_discrete(name = "Color Contrast (deg)", labels = c("10", "20", "30")) + scale_colour_discrete(name = "Subset") # for contrast (Fig. 2c)
 bxp = bxp + scale_x_discrete(name="Eccentricity (deg)", labels = c("6", "4", "2")) + scale_colour_discrete(name = "Subset") # for eccentricity (Fig. 2d)
 bxp = bxp + theme(text = element_text(size = 9, family="Helvetica"), title = element_text(size = 10), legend.text = element_text(size = 9), legend.title = element_text(size = 9),
