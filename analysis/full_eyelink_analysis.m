@@ -339,7 +339,7 @@ T = array2table(tabledata, 'VariableNames', {'subject', 'FT', 'baselinenms', 'ba
 filename = 'trial_data_withblinks.csv'; % main illusion trials
 %filename = 'trial_data_replay_withblinks.csv'; % replay catch trials
 %filename = 'trial_data_sharp_withblinks.csv'; % sharp catch trials
-writetable(T, filename);
+%writetable(T, filename);
 
 %% plot averaged by size or contrast
 
@@ -490,7 +490,8 @@ switch which2use
         set(sl, 'FontSize', 12);
     case 'separate'
         if overlay
-            lgnd = legend({'small low', 'medium low', 'large low', 'small medium', 'medium medium', 'large medium', 'small high', 'medium high', 'large high'});
+            lines = gca().Children;
+            lgnd = legend(lines(end-1:-3:1), {'small low', 'medium low', 'large low', 'small medium', 'medium medium', 'large medium', 'small high', 'medium high', 'large high'});
             sl = title([which2plot ' by condition']);
         else
             sly = suplabel('color contrast', 'y');
@@ -517,7 +518,7 @@ legend boxoff
 % Override some plotting parameters for manuscript figures
 ylbl = ylabel('Normalized Microsaccade Rate (Hz)');
 xlbl = xlabel('Time (ms)');
-ttl = title('Microsaccades Time-Locked to Fading Reports', 'FontWeight', 'Normal');
+ttl = title('Microsaccades Time-Locked to Filling-in Reports', 'FontWeight', 'Normal');
 set(gca, 'FontSize', 9, 'LineWidth', 1);
 set(bp, 'LineWidth', 1);
 set(ylbl, 'FontSize', 10); set(xlbl, 'FontSize', 10); set(ttl, 'FontSize', 12);
