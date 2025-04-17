@@ -29,26 +29,26 @@ boxsides = [0:epsilon:dva_side-epsilon; epsilon:epsilon:dva_side] - dva_side/2;
 
 % set microsaccades to NaN, and 10ms surrounding each one
 if ~incl_ms
-ms_changes = [0; diff(ms_present)];
-ms_onsets = find(ms_changes == 1);
-ms_offsets = find(ms_changes == -1);
-xPos(ms_present == 1) = NaN;
-for iOns = 1:numel(ms_onsets)
-    ons = ms_onsets(iOns);
-    if ons > 10
-        xPos((ons-10):ons) = NaN;
-    elseif ons <= 10
-        xPos(1:ons) = NaN;
+    ms_changes = [0; diff(ms_present)];
+    ms_onsets = find(ms_changes == 1);
+    ms_offsets = find(ms_changes == -1);
+    xPos(ms_present == 1) = NaN;
+    for iOns = 1:numel(ms_onsets)
+        ons = ms_onsets(iOns);
+        if ons > 10
+            xPos((ons-10):ons) = NaN;
+        elseif ons <= 10
+            xPos(1:ons) = NaN;
+        end
     end
-end
-for iOfs = 1:numel(ms_offsets)
-    ofs = ms_offsets(iOfs);
-    if ofs < numel(xPos) - 10
-        xPos(ofs:(ofs+10)) = NaN;
-    else
-        xPos(ofs:end) = NaN;
+    for iOfs = 1:numel(ms_offsets)
+        ofs = ms_offsets(iOfs);
+        if ofs < numel(xPos) - 10
+            xPos(ofs:(ofs+10)) = NaN;
+        else
+            xPos(ofs:end) = NaN;
+        end
     end
-end
 end
 
 % for each time window: for each timepoint, get the current box. Add

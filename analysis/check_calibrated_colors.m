@@ -3,7 +3,7 @@
 subjects = string([201:206 208:219, 222:224]);
 nsubjects = numel(subjects);
 
-data_dir = '/Users/maxlevinson/Documents/McGill/OneDrive - McGill University/neurospeed/UI_eyelink/bhv_data/';
+data_dir = './'; % replace with local directory of experiment code
 
 peripheries_low = nan(3, nsubjects);
 peripheries_med = nan(3, nsubjects);
